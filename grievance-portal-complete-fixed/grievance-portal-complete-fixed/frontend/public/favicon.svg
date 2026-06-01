@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Background -->
+  <rect width="64" height="64" rx="12" fill="#1d4ed8"/>
+  <!-- Tricolor stripe top -->
+  <rect x="0" y="0" width="64" height="6" rx="0" fill="#FF9933"/>
+  <rect x="0" y="6" width="64" height="4" fill="#FFFFFF"/>
+  <rect x="0" y="10" width="64" height="6" fill="#138808"/>
+  <!-- Building/portal icon -->
+  <rect x="20" y="28" width="24" height="22" rx="2" fill="white" opacity="0.95"/>
+  <rect x="27" y="36" width="10" height="14" rx="1" fill="#1d4ed8"/>
+  <!-- Columns -->
+  <rect x="22" y="30" width="3" height="20" rx="1" fill="#e2e8f0"/>
+  <rect x="39" y="30" width="3" height="20" rx="1" fill="#e2e8f0"/>
+  <!-- Pediment -->
+  <polygon points="16,28 32,18 48,28" fill="white" opacity="0.95"/>
+  <!-- JS text -->
+  <text x="32" y="16" font-family="serif" font-size="6" font-weight="bold" fill="white" text-anchor="middle" opacity="0.3">JS</text>
+</svg>

@@ -1,0 +1,43 @@
+# Environment files
+.env
+.env.local
+*.env
+.env.*
+FIXED_backend.env
+
+# Secrets & Private Keys
+firebase-key.json
+*key.json
+serviceAccountKey.json
+*creds*.json
+*.pem
+*.key
+jwt_secret*
+
+# Dependencies
+node_modules/
+bower_components/
+venv/
+.venv/
+env/
+
+# Python caching
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Builds and distribution
+dist/
+build/
+out/
+.next/
+
+# Databases & local files
+*.db
+*.sqlite3
+.dist/
+.idea/
+.vscode/
+.DS_Store
