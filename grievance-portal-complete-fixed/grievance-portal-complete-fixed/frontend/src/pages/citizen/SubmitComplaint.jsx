@@ -186,6 +186,7 @@ export default function SubmitComplaint() {
   };
 
   const reverseGeocode = async (lat, lng) => {
+    console.log(`📡 [GPS] Initiating reverse geocoding for coordinates: lat=${lat}, lng=${lng}`);
     try {
       const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
       const controller = new AbortController();
@@ -202,6 +203,7 @@ export default function SubmitComplaint() {
       
       if (!response.ok) throw new Error('Nominatim reverse lookup failed');
       const geoData = await response.json();
+      console.log('✅ [GPS] Geocoding API response received:', JSON.stringify(geoData.address));
       
       if (geoData && geoData.address) {
         const addr = geoData.address;
@@ -210,8 +212,10 @@ export default function SubmitComplaint() {
         const pincode = addr.postcode || '';
         const address = geoData.display_name || `GPS Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
         
+        console.log(`📡 [GPS] Mapping address keys. State: ${detectedState}, District: ${detectedDistrict}, Pincode: ${pincode}`);
         const { matchedState, matchedDistrict } = matchStateAndDistrict(detectedState, detectedDistrict, addr);
-        
+        console.log(`📡 [GPS] Mapping complete. Resolved State: ${matchedState}, Resolved District: ${matchedDistrict}`);
+
         setForm(f => ({
           ...f,
           location: {
@@ -233,10 +237,11 @@ export default function SubmitComplaint() {
         return true;
       }
     } catch (err) {
-      console.error('⚠️ Reverse geocoding failed:', err);
+      console.error('❌ [GPS] Reverse geocoding failed:', err);
     }
     
     // Fallback if Nominatim failed or returned no address, but we have lat/lng
+    console.log('⚠️ [GPS] Reverse geocoding failed. Auto-filling raw coordinates as address fallback.');
     setForm(f => ({
       ...f,
       location: {
@@ -256,70 +261,78 @@ export default function SubmitComplaint() {
     const isHttps = window.location.protocol === 'https:';
 
     if (!isHttps && !isLocalhost) {
+      console.warn('❌ [GPS] Geolocation rejected: Not in a secure context.');
       toast.error('GPS Geolocation requires a secure (HTTPS) connection in production.');
       return;
     }
 
+    console.log('📡 [GPS] Geolocation requested. Requesting browser telemetry (30s timeout)...');
     setGpsLoading(true);
     
     const browserGeoSuccess = async (pos) => {
-      const { latitude: lat, longitude: lng } = pos.coords;
+      const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+      console.log(`✅ [GPS] Browser geolocation succeeded. Lat: ${lat}, Lng: ${lng}, Accuracy: ${accuracy}m`);
       await reverseGeocode(lat, lng);
       setGpsLoading(false);
     };
 
     const browserGeoError = async (err) => {
-      console.warn('⚠️ Browser Geolocation failed or denied. Launching TIER 2 IP Geolocation fallback...', err);
+      console.warn('⚠️ [GPS] Browser Geolocation failed/denied. Code:', err.code, 'Message:', err.message);
       
-      // If permission is denied or blocked, notify the user and ask them to allow location
-      if (err.code === 1) { // PERMISSION_DENIED
-        setGpsLoading(false);
-        toast.error('Please allow location permission and try again.');
-        return;
+      let geoErrorMessage = 'Unable to detect location.';
+      if (err.code === 1) {
+        geoErrorMessage = 'Location access denied. Please allow location permission and try again.';
+      } else if (err.code === 2) {
+        geoErrorMessage = 'Position unavailable. Please allow location or enter manually.';
+      } else if (err.code === 3) {
+        geoErrorMessage = 'Location request timed out. Trying fast network IP fallback...';
       }
+      
+      toast.error(geoErrorMessage);
+      console.log('📡 [GPS] Launching secure backend IP geolocation proxy fallback...');
 
       try {
-        // TIER 2 Fallback: ipapi.co
-        const res = await fetch('https://ipapi.co/json/');
-        if (!res.ok) throw new Error('ipapi.co request failed');
-        const data = await res.json();
+        // Secure call to backend proxy endpoint instead of calling ipapi.co directly
+        const res = await api.get('/complaints/ip-geolocation');
+        const proxyData = res.data;
         
-        if (data.latitude && data.longitude) {
-          await reverseGeocode(data.latitude, data.longitude);
+        if (proxyData.success && proxyData.data) {
+          const { latitude, longitude, city, region, pincode } = proxyData.data;
+          console.log(`✅ [GPS] Backend proxy geolocation succeeded using ${proxyData.source}. Coords: ${latitude}, ${longitude}`);
+          
+          await reverseGeocode(latitude, longitude);
+          
+          // Auto-fill postal/pincode if resolved
+          if (pincode) {
+            setLoc('pincode', pincode);
+          }
+          
           setGpsLoading(false);
           return;
         }
-        throw new Error('Invalid coordinates returned from ipapi.co');
-      } catch (ipapiErr) {
-        console.warn('⚠️ ipapi.co fallback failed. Launching TIER 3 IP Geolocation backup...', ipapiErr.message);
-        
-        try {
-          // TIER 3 Fallback: ipwhois.app
-          const backupRes = await fetch('https://ipwhois.app/json/');
-          if (!backupRes.ok) throw new Error('ipwhois.app request failed');
-          const data = await backupRes.json();
-          
-          if (data.success && data.latitude && data.longitude) {
-            await reverseGeocode(data.latitude, data.longitude);
-            setGpsLoading(false);
-            return;
-          }
-        } catch (backupErr) {
-          console.error('❌ All Geolocation fallback tiers exhausted:', backupErr.message);
-        }
+      } catch (proxyErr) {
+        console.error('❌ [GPS] Backend proxy geolocation fallback failed:', proxyErr.message);
       }
       
       setGpsLoading(false);
-      toast.error('Please allow location permission and try again.');
+      // Specific error messages
+      if (err.code === 1) {
+        toast.error('Please allow location permission and try again.');
+      } else if (err.code === 3) {
+        toast.error('Location request timed out. Please enter location manually.');
+      } else {
+        toast.error('Could not detect location automatically. Please enter manually.');
+      }
     };
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         browserGeoSuccess,
         browserGeoError,
-        { timeout: 10000, enableHighAccuracy: true, maximumAge: 0 }
+        { timeout: 30000, enableHighAccuracy: true, maximumAge: 0 }
       );
     } else {
+      console.error('❌ [GPS] browser navigator.geolocation is not available');
       setGpsLoading(false);
       toast.error('Geolocation is not supported by your browser.');
     }

@@ -516,3 +516,80 @@ def detect_complaint_issue_view(request):
         traceback.print_exc()
         print("❌ [AIController] Vision detection failed:", str(e))
         return JsonResponse({'success': False, 'message': f"AI Vision analysis failed: {str(e)}"}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def ip_geolocation_view(request):
+    import requests
+    try:
+        # Extract client IP
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            client_ip = x_forwarded_for.split(',')[0].strip()
+        else:
+            client_ip = request.META.get('REMOTE_ADDR')
+            
+        print(f"📡 [IP-GeoProxy] Incoming request. Client IP: {client_ip}")
+        
+        # If client_ip is local loopback (e.g. 127.0.0.1 or ::1), let ipwho.is auto-detect the gateway IP
+        is_local = client_ip in ['127.0.0.1', '::1', 'localhost']
+        
+        # 1. TIER 1 Fallback: ipwho.is
+        try:
+            ipwhois_url = "https://ipwho.is/" if is_local else f"https://ipwho.is/{client_ip}"
+            print(f"📡 [IP-GeoProxy] [TIER 1] Calling ipwho.is for IP: {client_ip if not is_local else 'local-gateway'}")
+            res = requests.get(ipwhois_url, timeout=8)
+            if res.status_code == 200:
+                data = res.json()
+                if data.get('success'):
+                    print(f"✅ [IP-GeoProxy] [TIER 1] ipwho.is succeeded. Location: {data.get('city')}, {data.get('region')}")
+                    return JsonResponse({
+                        'success': True,
+                        'source': 'ipwhois',
+                        'data': {
+                            'latitude': float(data.get('latitude')),
+                            'longitude': float(data.get('longitude')),
+                            'city': data.get('city'),
+                            'region': data.get('region'),
+                            'pincode': data.get('postal', '')
+                        }
+                    })
+                else:
+                    print(f"⚠️ [IP-GeoProxy] [TIER 1] ipwho.is returned failure in response: {data.get('message')}")
+            else:
+                print(f"⚠️ [IP-GeoProxy] [TIER 1] ipwho.is failed with status {res.status_code}")
+        except Exception as e:
+            print(f"❌ [IP-GeoProxy] [TIER 1] ipwho.is error: {str(e)}")
+
+        # 2. TIER 2 Fallback: ipinfo.io
+        try:
+            ipinfo_url = "https://ipinfo.io/json" if is_local else f"https://ipinfo.io/{client_ip}/json"
+            print(f"📡 [IP-GeoProxy] [TIER 2] Calling ipinfo.io for IP: {client_ip if not is_local else 'local-gateway'}")
+            res = requests.get(ipinfo_url, timeout=8)
+            if res.status_code == 200:
+                data = res.json()
+                loc = data.get('loc', '')
+                if loc:
+                    lat, lng = loc.split(',')
+                    print(f"✅ [IP-GeoProxy] [TIER 2] ipinfo.io succeeded. Location: {data.get('city')}, {data.get('region')}")
+                    return JsonResponse({
+                        'success': True,
+                        'source': 'ipinfo',
+                        'data': {
+                            'latitude': float(lat),
+                            'longitude': float(lng),
+                            'city': data.get('city'),
+                            'region': data.get('region'),
+                            'pincode': data.get('postal', '')
+                        }
+                    })
+            else:
+                print(f"⚠️ [IP-GeoProxy] [TIER 2] ipinfo.io failed with status {res.status_code}")
+        except Exception as e:
+            print(f"❌ [IP-GeoProxy] [TIER 2] ipinfo.io error: {str(e)}")
+
+        return JsonResponse({'success': False, 'message': 'All IP geolocation fallback proxy tiers failed.'}, status=500)
+    except Exception as e:
+        print("❌ [IP-GeoProxy] Fatal error:", str(e))
+        return JsonResponse({'success': False, 'message': f"Proxy geolocation error: {str(e)}"}, status=500)
