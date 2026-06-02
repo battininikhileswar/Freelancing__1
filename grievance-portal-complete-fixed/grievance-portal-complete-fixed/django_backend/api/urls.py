@@ -8,7 +8,8 @@ from api.views.auth import (
 from api.views.complaints import (
     submit_complaint_view, track_complaint_view, get_my_complaints_view,
     get_complaint_detail_view, get_assigned_complaints_view,
-    update_complaint_status_view, get_analytics_view, get_heatmap_data_view
+    update_complaint_status_view, get_analytics_view, get_heatmap_data_view,
+    detect_complaint_issue_view
 )
 from api.views.admin import (
     get_all_users_view, create_authority_view, toggle_user_status_view,
@@ -54,6 +55,7 @@ urlpatterns = [
 
     # Complaints routes
     path('complaints', submit_complaint_view),
+    path('complaints/detect-issue', detect_complaint_issue_view),
     path('complaints/track/<str:complaintId>', track_complaint_view),
     path('complaints/my', get_my_complaints_view),
     path('complaints/authority/assigned', get_assigned_complaints_view),

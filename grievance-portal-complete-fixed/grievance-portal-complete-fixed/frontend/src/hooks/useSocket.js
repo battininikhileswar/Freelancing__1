@@ -30,7 +30,18 @@ export function useSocket() {
     // Initialize singleton if it doesn't exist yet
     if (!socketInstance) {
       console.log('🔌 Creating new Socket.IO singleton instance...');
-      socketInstance = io(import.meta.env.VITE_SOCKET_URL || '', {
+      const getSocketURL = () => {
+        if (typeof window !== 'undefined') {
+          const hostname = window.location.hostname;
+          const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+          if (!isLocalhost) {
+            return window.location.origin;
+          }
+        }
+        return import.meta.env.VITE_SOCKET_URL || '';
+      };
+
+      socketInstance = io(getSocketURL(), {
         transports: ['websocket', 'polling'],
         auth: { token },
         reconnection: true,

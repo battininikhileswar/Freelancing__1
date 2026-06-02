@@ -191,7 +191,13 @@ export default function SubmitComplaint() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 6000);
       
-      const response = await fetch(url, { signal: controller.signal });
+      const response = await fetch(url, { 
+        signal: controller.signal,
+        headers: {
+          'User-Agent': 'JanShaktiGrievancePortal/1.0.0 (citizen@janshakti.gov.in)',
+          'Accept-Language': 'en'
+        }
+      });
       clearTimeout(timeoutId);
       
       if (!response.ok) throw new Error('Nominatim reverse lookup failed');
@@ -245,6 +251,15 @@ export default function SubmitComplaint() {
   };
 
   const detectGPS = () => {
+    // 1. Secure context / Production check
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const isHttps = window.location.protocol === 'https:';
+
+    if (!isHttps && !isLocalhost) {
+      toast.error('GPS Geolocation requires a secure (HTTPS) connection in production.');
+      return;
+    }
+
     setGpsLoading(true);
     
     const browserGeoSuccess = async (pos) => {
@@ -256,6 +271,13 @@ export default function SubmitComplaint() {
     const browserGeoError = async (err) => {
       console.warn('⚠️ Browser Geolocation failed or denied. Launching TIER 2 IP Geolocation fallback...', err);
       
+      // If permission is denied or blocked, notify the user and ask them to allow location
+      if (err.code === 1) { // PERMISSION_DENIED
+        setGpsLoading(false);
+        toast.error('Please allow location permission and try again.');
+        return;
+      }
+
       try {
         // TIER 2 Fallback: ipapi.co
         const res = await fetch('https://ipapi.co/json/');
@@ -288,14 +310,19 @@ export default function SubmitComplaint() {
       }
       
       setGpsLoading(false);
-      toast.error('Could not detect location. Please enter manually.');
+      toast.error('Please allow location permission and try again.');
     };
 
-    navigator.geolocation.getCurrentPosition(
-      browserGeoSuccess,
-      browserGeoError,
-      { timeout: 5000, enableHighAccuracy: false }
-    );
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        browserGeoSuccess,
+        browserGeoError,
+        { timeout: 10000, enableHighAccuracy: true, maximumAge: 0 }
+      );
+    } else {
+      setGpsLoading(false);
+      toast.error('Geolocation is not supported by your browser.');
+    }
   };
 
   const canNext = () => {
@@ -630,7 +657,7 @@ export default function SubmitComplaint() {
                   <button onClick={detectGPS} disabled={gpsLoading}
                     className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-brand-300 dark:border-brand-700 text-brand-700 dark:text-brand-400 text-sm font-medium hover:bg-brand-50 dark:hover:bg-brand-950 transition-colors">
                     <Navigation size={15} className={gpsLoading ? 'animate-spin' : ''} />
-                    {gpsLoading ? 'Detecting...' : 'Auto-detect GPS'}
+                    {gpsLoading ? 'Detecting location...' : 'Auto-detect GPS'}
                   </button>
                   {form.location.lat && (
                     <span className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400 font-medium">

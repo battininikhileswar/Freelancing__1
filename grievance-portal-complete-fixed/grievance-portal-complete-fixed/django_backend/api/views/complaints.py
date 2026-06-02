@@ -474,3 +474,45 @@ def get_heatmap_data_view(request):
     except Exception as e:
         print("❌ [heatmapView] Error:", str(e))
         return JsonResponse({'success': False, 'message': 'Failed to retrieve heatmap data'}, status=500)
+
+
+@csrf_exempt
+@jwt_optional_auth
+@require_http_methods(["POST"])
+def detect_complaint_issue_view(request):
+    from api.services.ai import detect_issue_from_image
+    try:
+        # Verify file was uploaded
+        if 'image' not in request.FILES:
+            return JsonResponse({'success': False, 'message': 'No photo uploaded. Please attach a valid image file (form field: "image").'}, status=400)
+        
+        uploaded_file = request.FILES['image']
+        
+        # Validate mime type starts with image/
+        if not uploaded_file.content_type.startswith('image/'):
+            return JsonResponse({'success': False, 'message': 'Invalid file type. Only image files (JPEG, PNG, WEBP) are supported.'}, status=400)
+            
+        print(f"📷 [AIController] Vision request received via Django. File: {uploaded_file.name} ({uploaded_file.size} bytes)")
+        
+        # Read the file bytes
+        file_bytes = uploaded_file.read()
+        
+        # Call the Vision service
+        result = detect_issue_from_image(file_bytes, mime_type=uploaded_file.content_type, original_name=uploaded_file.name)
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'AI Photo Analysis completed successfully.',
+            'data': {
+                'detectedCategory': result.get('detectedCategory'),
+                'confidence': result.get('confidence'),
+                'reason': result.get('reason'),
+                'mappedCategory': result.get('mappedCategory'),
+                'mappedSubcategory': result.get('mappedSubcategory')
+            }
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print("❌ [AIController] Vision detection failed:", str(e))
+        return JsonResponse({'success': False, 'message': f"AI Vision analysis failed: {str(e)}"}, status=500)
