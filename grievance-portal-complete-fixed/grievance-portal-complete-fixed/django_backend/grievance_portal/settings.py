@@ -24,9 +24,14 @@ load_dotenv(os.path.join(BASE_DIR.parent, 'backend', '.env'))
 
 SECRET_KEY = os.getenv('JWT_SECRET', 'django-insecure-default-secret-key-1234567890')
 
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    "freelancing-1-mzzu.onrender.com",
+    ".onrender.com",
+]
 
 # Application definition
 
