@@ -1,0 +1,101 @@
+services:
+  # ------------------------------------------------------------
+  # 🚀 JAN SHAKTI — BACKEND WEB SERVICE
+  # ------------------------------------------------------------
+  - type: web
+    name: janshakti-backend
+    env: node
+    plan: free
+    rootDir: grievance-portal-complete-fixed/grievance-portal-complete-fixed/backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: CLIENT_URL
+        sync: false
+        placeholder: "Enter your frontend URL after deploy (e.g., https://janshakti-frontend.onrender.com). Can be updated later."
+      - key: ENCRYPTION_KEY
+        generateValue: true
+      
+      # Firebase Configurations (Optional - falls back to mock DB if left empty)
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY_ID
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_CLIENT_ID
+        sync: false
+      - key: FIREBASE_STORAGE_BUCKET
+        sync: false
+
+      # Cloudinary Configs (For file/proof uploads)
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+      # SMTP Server (Optional, for email notifications)
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM
+        value: noreply@grievanceportal.gov.in
+
+      # Twilio (Optional, for SMS notifications)
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_NUMBER
+        sync: false
+
+      # Rate Limiting
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX
+        value: 100
+
+  # ------------------------------------------------------------
+  # 🌐 JAN SHAKTI — FRONTEND STATIC SITE
+  # ------------------------------------------------------------
+  - type: web
+    name: janshakti-frontend
+    env: static
+    plan: free
+    rootDir: grievance-portal-complete-fixed/grievance-portal-complete-fixed/frontend
+    buildCommand: npm install && npm run build
+    publishDir: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          name: janshakti-backend
+          type: web
+          property: host
+      - key: VITE_SOCKET_URL
+        fromService:
+          name: janshakti-backend
+          type: web
+          property: host
+      - key: VITE_APP_NAME
+        value: "Jan Shakti India Grievance Redressal Portal"
+      - key: VITE_APP_VERSION
+        value: "1.0.0"
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false
