@@ -5,6 +5,8 @@ AUTHORITY_TYPE_MAP = {
     'crime': 'ps',
     'corruption': 'acb',
     'civic_issue': 'municipal',
+    'fire': 'fire',
+    'hospital': 'hospital',
 }
 
 # Subcategory overrides
@@ -32,6 +34,24 @@ SUBCATEGORY_OVERRIDES = {
     'garbage': 'municipal',
     'electricity': 'municipal',
     'noise_pollution': 'municipal',
+
+    # Fire subcategories
+    'fire_outbreak': 'fire',
+    'safety_hazard': 'fire',
+    'gas_leak': 'fire',
+    'other_fire': 'fire',
+
+    # Hospital subcategories
+    'ambulance_delay': 'hospital',
+    'medical_negligence': 'hospital',
+    'hospital_infra': 'hospital',
+    'other_hospital': 'hospital',
+
+    # Emergency subcategories
+    'emergency_fire': 'fire',
+    'emergency_flood': 'municipal',
+    'emergency_accident': 'ps',
+    'emergency_electrical': 'municipal',
 }
 
 def route_complaint(category, subcategory, location):

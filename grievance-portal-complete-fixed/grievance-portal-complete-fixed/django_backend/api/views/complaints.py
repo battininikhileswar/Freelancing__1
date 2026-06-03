@@ -237,7 +237,7 @@ def get_complaint_detail_view(request, id):
     if user.role == 'citizen' and complaint.user_id != user.id:
         return JsonResponse({'success': False, 'message': 'Access denied.'}, status=403)
         
-    if user.role in ['ps_officer', 'acb_officer', 'municipal_officer']:
+    if user.role in ['ps_officer', 'acb_officer', 'municipal_officer', 'fire_officer', 'hospital_officer']:
         if complaint.routing.get('authorityId') != user.authority_id:
             return JsonResponse({'success': False, 'message': 'This complaint is not assigned to your authority.'}, status=403)
 
@@ -273,7 +273,7 @@ def get_complaint_detail_view(request, id):
 
 @csrf_exempt
 @jwt_auth_required
-@role_required('ps_officer', 'acb_officer', 'municipal_officer', 'super_admin')
+@role_required('ps_officer', 'acb_officer', 'municipal_officer', 'fire_officer', 'hospital_officer', 'super_admin')
 @require_http_methods(["GET"])
 def get_assigned_complaints_view(request):
     status_filter = request.GET.get('status')
@@ -328,7 +328,7 @@ def get_assigned_complaints_view(request):
 
 @csrf_exempt
 @jwt_auth_required
-@role_required('ps_officer', 'acb_officer', 'municipal_officer', 'super_admin')
+@role_required('ps_officer', 'acb_officer', 'municipal_officer', 'fire_officer', 'hospital_officer', 'super_admin')
 @require_http_methods(["PUT"])
 def update_complaint_status_view(request, id):
     try:
@@ -337,7 +337,7 @@ def update_complaint_status_view(request, id):
         return JsonResponse({'success': False, 'message': 'Complaint not found.'}, status=404)
 
     user = request.user
-    if user.role in ['ps_officer', 'acb_officer', 'municipal_officer']:
+    if user.role in ['ps_officer', 'acb_officer', 'municipal_officer', 'fire_officer', 'hospital_officer']:
         if complaint.routing.get('authorityId') != user.authority_id:
             return JsonResponse({'success': False, 'message': 'Not authorized to update this complaint.'}, status=403)
 
@@ -430,6 +430,8 @@ def get_analytics_view(request):
     crime = Complaint.objects.filter(category='crime').count()
     corruption = Complaint.objects.filter(category='corruption').count()
     civic_issue = Complaint.objects.filter(category='civic_issue').count()
+    fire = Complaint.objects.filter(category='fire').count()
+    hospital = Complaint.objects.filter(category='hospital').count()
 
     return JsonResponse({
         'success': True,
@@ -441,6 +443,8 @@ def get_analytics_view(request):
                 'crime': crime,
                 'corruption': corruption,
                 'civic_issue': civic_issue,
+                'fire': fire,
+                'hospital': hospital,
             }
         }
     })
@@ -507,6 +511,8 @@ def detect_complaint_issue_view(request):
                 'detectedCategory': result.get('detectedCategory'),
                 'confidence': result.get('confidence'),
                 'reason': result.get('reason'),
+                'severity': result.get('severity'),
+                'severityReason': result.get('severityReason'),
                 'mappedCategory': result.get('mappedCategory'),
                 'mappedSubcategory': result.get('mappedSubcategory')
             }

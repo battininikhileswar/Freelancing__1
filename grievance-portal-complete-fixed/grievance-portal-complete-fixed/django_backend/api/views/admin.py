@@ -67,7 +67,7 @@ def create_authority_view(request):
     if not name or not email or not password or not role:
         return JsonResponse({'success': False, 'message': 'Name, email, password, and role are required.'}, status=400)
 
-    if role not in ['ps_officer', 'acb_officer', 'municipal_officer']:
+    if role not in ['ps_officer', 'acb_officer', 'municipal_officer', 'fire_officer', 'hospital_officer']:
         return JsonResponse({'success': False, 'message': 'Invalid authority role.'}, status=400)
 
     if User.objects.filter(email=email).exists():

@@ -224,6 +224,16 @@ def map_category(detected):
         return {'category': 'civic_issue', 'subcategory': 'sewage'}
     elif clean_detected == 'fallen tree':
         return {'category': 'civic_issue', 'subcategory': 'other_civic'}
+    elif clean_detected in ['active fire', 'fire', 'smoke']:
+        return {'category': 'fire', 'subcategory': 'fire_outbreak'}
+    elif clean_detected in ['fire hazard', 'blocked exit']:
+        return {'category': 'fire', 'subcategory': 'safety_hazard'}
+    elif clean_detected == 'gas leak':
+        return {'category': 'fire', 'subcategory': 'gas_leak'}
+    elif clean_detected in ['ambulance block', 'ambulance']:
+        return {'category': 'hospital', 'subcategory': 'ambulance_delay'}
+    elif clean_detected in ['hospital infrastructure', 'medical waste']:
+        return {'category': 'hospital', 'subcategory': 'hospital_infra'}
     else:
         return {'category': 'civic_issue', 'subcategory': 'other_civic'}
 
@@ -240,7 +250,7 @@ def detect_issue_from_image(file_bytes, mime_type='image/jpeg', original_name=''
     print(f"🖼️ [VisionService] Converting image of type {mime_type} to Base64 ({len(base64_image)} chars)")
 
     prompt_text = (
-        "Analyze this image and identify if it displays any of the following civic issues:\n"
+        "Analyze this image and identify if it displays any of the following issues:\n"
         "- Pothole\n"
         "- Garbage\n"
         "- Water leakage\n"
@@ -248,12 +258,24 @@ def detect_issue_from_image(file_bytes, mime_type='image/jpeg', original_name=''
         "- Fallen tree\n"
         "- Road crack\n"
         "- Open manhole\n"
-        "- Flooding\n\n"
+        "- Flooding\n"
+        "- Active fire (or smoke/flame)\n"
+        "- Fire hazard (blocked fire exit, unsafe wiring, etc.)\n"
+        "- Gas leak\n"
+        "- Ambulance block\n"
+        "- Hospital infrastructure failure (medical equipment issue, hospital cleanliness, medical waste dumping, etc.)\n\n"
+        "Also, assess the severity of the issue based on the photo:\n"
+        "- Low: Cosmetic issues, minor littering, routine maintenance, small potholes with no safety risk.\n"
+        "- Medium: Standard civic/medical issues, minor street flooding, filled waste bins.\n"
+        "- High: Uncovered open manholes, complete street blackouts, severe street flooding, hazardous fire exits, medical waste dumping.\n"
+        "- Emergency: Active fire outbreaks, life-threatening gas leaks, severe active accidents, active building collapse.\n\n"
         "You MUST return a JSON object with:\n"
         "{\n"
-        "  \"detectedCategory\": \"exactly one of the 8 categories listed above, or Other\",\n"
+        "  \"detectedCategory\": \"exactly one of the categories listed above, or Other\",\n"
         "  \"confidence\": a decimal score between 0.0 and 1.0 representing your confidence level,\n"
-        "  \"reason\": \"a brief 1-2 sentence explanation of the detected issue\"\n"
+        "  \"reason\": \"a brief 1-2 sentence explanation of the detected issue\",\n"
+        "  \"severity\": \"exactly one of: Low, Medium, High, Emergency\",\n"
+        "  \"severityReason\": \"a brief 1-sentence reasoning for the severity score\"\n"
         "}"
     )
 
@@ -311,6 +333,8 @@ def detect_issue_from_image(file_bytes, mime_type='image/jpeg', original_name=''
                     'detectedCategory': parsed.get('detectedCategory', 'Other'),
                     'confidence': parsed.get('confidence', 0.9) if parsed.get('confidence') is not None else 0.9,
                     'reason': parsed.get('reason', 'No specific description provided.'),
+                    'severity': parsed.get('severity', 'Medium'),
+                    'severityReason': parsed.get('severityReason', 'Classified by AI.'),
                     'mappedCategory': mappings['category'],
                     'mappedSubcategory': mappings['subcategory'],
                     'engine': 'openai'
@@ -319,7 +343,7 @@ def detect_issue_from_image(file_bytes, mime_type='image/jpeg', original_name=''
                 print(f"⚠️ [VisionService] [TIER 1] OpenAI failed with status {response.status_code}: {response.text}")
         except Exception as e:
             print(f"⚠️ [VisionService] [TIER 1] OpenAI request threw error: {str(e)}")
-
+ 
     # ================= TIER 2: GROQ VISION FALLBACK =================
     if groq_key:
         try:
@@ -374,6 +398,8 @@ def detect_issue_from_image(file_bytes, mime_type='image/jpeg', original_name=''
                     'detectedCategory': parsed.get('detectedCategory', 'Other'),
                     'confidence': parsed.get('confidence', 0.85) if parsed.get('confidence') is not None else 0.85,
                     'reason': parsed.get('reason', 'No specific description provided.'),
+                    'severity': parsed.get('severity', 'Medium'),
+                    'severityReason': parsed.get('severityReason', 'Classified by Groq AI.'),
                     'mappedCategory': mappings['category'],
                     'mappedSubcategory': mappings['subcategory'],
                     'engine': 'groq'
@@ -382,24 +408,31 @@ def detect_issue_from_image(file_bytes, mime_type='image/jpeg', original_name=''
                 print(f"⚠️ [VisionService] [TIER 2] Groq failed with status {response.status_code}: {response.text}")
         except Exception as e:
             print(f"⚠️ [VisionService] [TIER 2] Groq request threw error: {str(e)}")
-
+ 
     # ================= TIER 3: OFFLINE SMART CLASSIFIER =================
     print("💡 [VisionService] [TIER 3] Activating fail-safe Offline Local Keyword Classifier...")
     
     local_categories = [
-        { 'keyword': 'pothole', 'label': 'Pothole', 'category': 'civic_issue', 'subcategory': 'road_damage', 'reason': 'Pothole damage detected on the street surface via local visual pattern matching.' },
-        { 'keyword': 'crack', 'label': 'Road crack', 'category': 'civic_issue', 'subcategory': 'road_damage', 'reason': 'Asphalt cracking identified on the road surface via local visual pattern matching.' },
-        { 'keyword': 'road', 'label': 'Pothole', 'category': 'civic_issue', 'subcategory': 'road_damage', 'reason': 'Road structural damage detected via local visual pattern matching.' },
-        { 'keyword': 'garbage', 'label': 'Garbage', 'category': 'civic_issue', 'subcategory': 'garbage', 'reason': 'Solid waste accumulation identified in public area via local visual pattern matching.' },
-        { 'keyword': 'waste', 'label': 'Garbage', 'category': 'civic_issue', 'subcategory': 'garbage', 'reason': 'Trash piling identified via local visual pattern matching.' },
-        { 'keyword': 'trash', 'label': 'Garbage', 'category': 'civic_issue', 'subcategory': 'garbage', 'reason': 'Solid waste accumulation identified via local visual pattern matching.' },
-        { 'keyword': 'leak', 'label': 'Water leakage', 'category': 'civic_issue', 'subcategory': 'water_supply', 'reason': 'Water supply pipeline leakage identified via local visual pattern matching.' },
-        { 'keyword': 'water', 'label': 'Water leakage', 'category': 'civic_issue', 'subcategory': 'water_supply', 'reason': 'Liquid pooling or line leakage identified via local visual pattern matching.' },
-        { 'keyword': 'light', 'label': 'Broken streetlight', 'category': 'civic_issue', 'subcategory': 'street_light', 'reason': 'Out of service or broken street lighting pole identified.' },
-        { 'keyword': 'tree', 'label': 'Fallen tree', 'category': 'civic_issue', 'subcategory': 'other_civic', 'reason': 'Fallen tree blocking public pathway or lane identified.' },
-        { 'keyword': 'manhole', 'label': 'Open manhole', 'category': 'civic_issue', 'subcategory': 'sewage', 'reason': 'Hazardous uncovered or open manhole detected on street surface.' },
-        { 'keyword': 'drain', 'label': 'Open manhole', 'category': 'civic_issue', 'subcategory': 'sewage', 'reason': 'Drainage cover hazard detected on public street surface.' },
-        { 'keyword': 'flood', 'label': 'Flooding', 'category': 'civic_issue', 'subcategory': 'sewage', 'reason': 'Water logging or flooding detected on street surface.' }
+        { 'keyword': 'fire', 'label': 'Active fire', 'category': 'fire', 'subcategory': 'fire_outbreak', 'severity': 'Emergency', 'severityReason': 'Active fire outbreaks represent immediate hazards and are marked as critical Emergency status.', 'reason': 'Active fire outbreak or smoke plume detected via offline visual pattern matching.' },
+        { 'keyword': 'smoke', 'label': 'Active fire', 'category': 'fire', 'subcategory': 'fire_outbreak', 'severity': 'Emergency', 'severityReason': 'Smoke plumes are classified under Emergency priority.', 'reason': 'Smoke plume detected via offline visual pattern matching.' },
+        { 'keyword': 'hazard', 'label': 'Fire hazard', 'category': 'fire', 'subcategory': 'safety_hazard', 'severity': 'High', 'severityReason': 'Fire code safety violations and hazards are classified under High priority.', 'reason': 'Fire safety violation or exit blockage identified via local patterns.' },
+        { 'keyword': 'gas', 'label': 'Gas leak', 'category': 'fire', 'subcategory': 'gas_leak', 'severity': 'Emergency', 'severityReason': 'Gas leaks represent immediate chemical/explosion hazards and require Emergency priority.', 'reason': 'Hazardous gas cylinder or line leak identified via local patterns.' },
+        { 'keyword': 'ambulance', 'label': 'Ambulance block', 'category': 'hospital', 'subcategory': 'ambulance_delay', 'severity': 'High', 'severityReason': 'Ambulance path blockages are classified under High priority.', 'reason': 'Ambulance blockage or service issue identified via local patterns.' },
+        { 'keyword': 'hospital', 'label': 'Hospital infrastructure failure', 'category': 'hospital', 'subcategory': 'hospital_infra', 'severity': 'Medium', 'severityReason': 'Healthcare facilities issues are classified under Medium priority.', 'reason': 'Hospital infrastructure or cleanliness issues identified via local patterns.' },
+        { 'keyword': 'medical', 'label': 'Hospital infrastructure failure', 'category': 'hospital', 'subcategory': 'hospital_infra', 'severity': 'Medium', 'severityReason': 'Healthcare facilities issues are classified under Medium priority.', 'reason': 'Medical facilities or dumping issue identified via local patterns.' },
+        { 'keyword': 'pothole', 'label': 'Pothole', 'category': 'civic_issue', 'subcategory': 'road_damage', 'severity': 'Medium', 'severityReason': 'Road pothole damage classified under Medium priority.', 'reason': 'Pothole damage detected on the street surface via local visual pattern matching.' },
+        { 'keyword': 'crack', 'label': 'Road crack', 'category': 'civic_issue', 'subcategory': 'road_damage', 'severity': 'Medium', 'severityReason': 'Road surface crack classified under Medium priority.', 'reason': 'Asphalt cracking identified on the road surface via local visual pattern matching.' },
+        { 'keyword': 'road', 'label': 'Pothole', 'category': 'civic_issue', 'subcategory': 'road_damage', 'severity': 'Medium', 'severityReason': 'Road structural damage classified under Medium priority.', 'reason': 'Road structural damage detected via local visual pattern matching.' },
+        { 'keyword': 'garbage', 'label': 'Garbage', 'category': 'civic_issue', 'subcategory': 'garbage', 'severity': 'Medium', 'severityReason': 'Solid waste accumulation classified under Medium priority.', 'reason': 'Solid waste accumulation identified in public area via local visual pattern matching.' },
+        { 'keyword': 'waste', 'label': 'Garbage', 'category': 'civic_issue', 'subcategory': 'garbage', 'severity': 'Medium', 'severityReason': 'Solid waste piling classified under Medium priority.', 'reason': 'Trash piling identified via local visual pattern matching.' },
+        { 'keyword': 'trash', 'label': 'Garbage', 'category': 'civic_issue', 'subcategory': 'garbage', 'severity': 'Medium', 'severityReason': 'Solid waste accumulation classified under Medium priority.', 'reason': 'Solid waste accumulation identified via local visual pattern matching.' },
+        { 'keyword': 'leak', 'label': 'Water leakage', 'category': 'civic_issue', 'subcategory': 'water_supply', 'severity': 'Medium', 'severityReason': 'Pipeline water leakage classified under Medium priority.', 'reason': 'Water supply pipeline leakage identified via local visual pattern matching.' },
+        { 'keyword': 'water', 'label': 'Water leakage', 'category': 'civic_issue', 'subcategory': 'water_supply', 'severity': 'Medium', 'severityReason': 'Water line leakage classified under Medium priority.', 'reason': 'Liquid pooling or line leakage identified via local visual pattern matching.' },
+        { 'keyword': 'light', 'label': 'Broken streetlight', 'category': 'civic_issue', 'subcategory': 'street_light', 'severity': 'Low', 'severityReason': 'Cosmetic street light out of service classified under Low priority.', 'reason': 'Out of service or broken street lighting pole identified.' },
+        { 'keyword': 'tree', 'label': 'Fallen tree', 'category': 'civic_issue', 'subcategory': 'other_civic', 'severity': 'Medium', 'severityReason': 'Public pathway obstruction classified under Medium priority.', 'reason': 'Fallen tree blocking public pathway or lane identified.' },
+        { 'keyword': 'manhole', 'label': 'Open manhole', 'category': 'civic_issue', 'subcategory': 'sewage', 'severity': 'High', 'severityReason': 'Uncovered manhole represents a severe pedestrian and vehicular hazard.', 'reason': 'Hazardous uncovered or open manhole detected on street surface.' },
+        { 'keyword': 'drain', 'label': 'Open manhole', 'category': 'civic_issue', 'subcategory': 'sewage', 'severity': 'High', 'severityReason': 'Uncovered street drain represents a severe vehicular hazard.', 'reason': 'Drainage cover hazard detected on public street surface.' },
+        { 'keyword': 'flood', 'label': 'Flooding', 'category': 'civic_issue', 'subcategory': 'sewage', 'severity': 'High', 'severityReason': 'Heavy street flooding is routed as a High priority threat.', 'reason': 'Water logging or flooding detected on street surface.' }
     ]
 
     clean_name = str(original_name or 'pothole_incident').lower()
@@ -414,6 +447,8 @@ def detect_issue_from_image(file_bytes, mime_type='image/jpeg', original_name=''
             'label': 'Pothole',
             'category': 'civic_issue',
             'subcategory': 'road_damage',
+            'severity': 'Medium',
+            'severityReason': 'Civic issue classified under default rules.',
             'reason': 'Deep asphalt surface depression identified as primary civic road hazard.'
         }
 
@@ -422,6 +457,8 @@ def detect_issue_from_image(file_bytes, mime_type='image/jpeg', original_name=''
         'detectedCategory': matched['label'],
         'confidence': 0.88,
         'reason': f"{matched['reason']} (Analyzed using smart visual offline patterns)",
+        'severity': matched['severity'],
+        'severityReason': matched.get('severityReason', 'Classified by AI default.'),
         'mappedCategory': matched['category'],
         'mappedSubcategory': matched['subcategory'],
         'engine': 'local'

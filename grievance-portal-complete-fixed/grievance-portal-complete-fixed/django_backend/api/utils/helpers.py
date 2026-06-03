@@ -14,6 +14,8 @@ CATEGORY_PREFIX = {
     'crime': 'PS',
     'corruption': 'ACB',
     'civic_issue': 'MUN',
+    'fire': 'FIRE',
+    'hospital': 'HOSP',
 }
 
 # State code map (Indian states)
