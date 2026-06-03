@@ -23,6 +23,10 @@ const ROUTE_MAP = {
   '/ps-dashboard': '/ps-dashboard',
   'acb_dashboard': '/acb-dashboard',
   '/acb-dashboard': '/acb-dashboard',
+  'fire_dashboard': '/fire-dashboard',
+  '/fire-dashboard': '/fire-dashboard',
+  'hospital_dashboard': '/hospital-dashboard',
+  '/hospital-dashboard': '/hospital-dashboard',
   'authority_dashboard': '/dashboard', // Dynamic fallback below
   'report_issue': '/submit-complaint',
   '/submit-complaint': '/submit-complaint',
@@ -81,6 +85,8 @@ export const voiceActionExecutor = {
       if (role === 'ps_officer') return '/ps-dashboard';
       if (role === 'acb_officer') return '/acb-dashboard';
       if (role === 'municipal_officer') return '/municipal-dashboard';
+      if (role === 'fire_officer') return '/fire-dashboard';
+      if (role === 'hospital_officer') return '/hospital-dashboard';
       return '/dashboard'; // Fallback
     }
 

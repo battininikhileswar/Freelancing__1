@@ -18,6 +18,8 @@ import ProfileSettings from './pages/citizen/ProfileSettings';
 import PSDashboard from './pages/authority/PSDashboard';
 import ACBDashboard from './pages/authority/ACBDashboard';
 import MunicipalDashboard from './pages/authority/MunicipalDashboard';
+import FireDashboard from './pages/authority/FireDashboard';
+import HospitalDashboard from './pages/authority/HospitalDashboard';
 import AdminPanel from './pages/admin/AdminPanel';
 import CreateAuthority from './pages/admin/CreateAuthority';
 import EscalationsPage from './pages/admin/EscalationsPage';
@@ -106,6 +108,8 @@ const PublicRoute = ({ children }) => {
       ps_officer: '/ps-dashboard',
       acb_officer: '/acb-dashboard',
       municipal_officer: '/municipal-dashboard',
+      fire_officer: '/fire-dashboard',
+      hospital_officer: '/hospital-dashboard',
       super_admin: '/admin/dashboard',
     };
     return <Navigate to={redirectMap[role] || '/dashboard'} replace />;
@@ -157,6 +161,8 @@ export default function App() {
         <Route path="/ps-dashboard" element={<ProtectedRoute roles={['ps_officer', 'super_admin']}><PSDashboard /></ProtectedRoute>} />
         <Route path="/acb-dashboard" element={<ProtectedRoute roles={['acb_officer', 'super_admin']}><ACBDashboard /></ProtectedRoute>} />
         <Route path="/municipal-dashboard" element={<ProtectedRoute roles={['municipal_officer', 'super_admin']}><MunicipalDashboard /></ProtectedRoute>} />
+        <Route path="/fire-dashboard" element={<ProtectedRoute roles={['fire_officer', 'super_admin']}><FireDashboard /></ProtectedRoute>} />
+        <Route path="/hospital-dashboard" element={<ProtectedRoute roles={['hospital_officer', 'super_admin']}><HospitalDashboard /></ProtectedRoute>} />
 
         {/* Admin */}
         <Route path="/admin/login" element={<AdminPublicRoute><Login /></AdminPublicRoute>} />

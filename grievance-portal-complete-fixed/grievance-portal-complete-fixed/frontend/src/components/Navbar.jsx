@@ -32,6 +32,8 @@ export default function Navbar({ onMenuToggle, sidebarOpen }) {
     ps_officer: '/ps-dashboard',
     acb_officer: '/acb-dashboard',
     municipal_officer: '/municipal-dashboard',
+    fire_officer: '/fire-dashboard',
+    hospital_officer: '/hospital-dashboard',
     super_admin: '/admin',
   };
 

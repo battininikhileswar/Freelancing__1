@@ -49,6 +49,28 @@ export const CATEGORIES = {
       { value: 'other_civic', label: 'Other Civic Issue' },
     ],
   },
+  fire: {
+    label: 'Fire Safety / Emergency',
+    icon: '🔥',
+    color: 'orange',
+    subcategories: [
+      { value: 'fire_outbreak', label: 'Active Fire Outbreak' },
+      { value: 'safety_hazard', label: 'Fire Safety Hazard / Code Violation' },
+      { value: 'gas_leak', label: 'Hazardous Gas Leak' },
+      { value: 'other_fire', label: 'Other Fire Incident' },
+    ],
+  },
+  hospital: {
+    label: 'Healthcare / Hospital',
+    icon: '🏥',
+    color: 'rose',
+    subcategories: [
+      { value: 'ambulance_delay', label: 'Ambulance Delay / Service Issue' },
+      { value: 'medical_negligence', label: 'Medical Negligence / Grievance' },
+      { value: 'hospital_infra', label: 'Hospital Infrastructure Failure' },
+      { value: 'other_hospital', label: 'Other Healthcare Issue' },
+    ],
+  },
 };
 
 // ======= Status Labels =======
@@ -78,6 +100,8 @@ export const ROLE_LABELS = {
   ps_officer: 'Police Station Officer',
   acb_officer: 'ACB Officer',
   municipal_officer: 'Municipal Officer',
+  fire_officer: 'Fire Department Officer',
+  hospital_officer: 'Hospital Authority Officer',
   super_admin: 'Super Administrator',
 };
 
@@ -125,4 +149,6 @@ export const AUTHORITY_TYPE_INFO = {
   ps: { label: 'Police Station', short: 'PS', icon: '🚔', color: 'blue' },
   acb: { label: 'Anti-Corruption Bureau', short: 'ACB', icon: '⚖️', color: 'purple' },
   municipal: { label: 'Municipal Authority', short: 'MUN', icon: '🏛️', color: 'teal' },
+  fire: { label: 'Fire Department', short: 'FIRE', icon: '🔥', color: 'orange' },
+  hospital: { label: 'Hospital Authority', short: 'HOSP', icon: '🏥', color: 'rose' },
 };

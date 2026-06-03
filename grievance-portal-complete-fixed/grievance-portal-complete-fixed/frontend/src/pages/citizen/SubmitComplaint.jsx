@@ -563,12 +563,28 @@ export default function SubmitComplaint() {
                             </span>
                           </div>
 
+                          <div className="flex justify-between items-center">
+                            <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">AI Severity:</span>
+                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-200/50 animate-pulse">
+                              {aiResult.severity}
+                            </span>
+                          </div>
+
                           <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2 space-y-1">
                             <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">AI Analysis:</span>
                             <p className="text-slate-600 dark:text-slate-300 font-semibold leading-relaxed">
                               {aiResult.reason}
                             </p>
                           </div>
+
+                          {aiResult.severityReason && (
+                            <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2 space-y-1">
+                              <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Severity Reason:</span>
+                              <p className="text-slate-600 dark:text-slate-300 font-semibold leading-relaxed">
+                                {aiResult.severityReason}
+                              </p>
+                            </div>
+                          )}
 
                           <div className="pt-1.5 flex gap-2">
                             <span className="text-[10px] font-bold text-green-600 dark:text-green-400 flex items-center gap-1">
@@ -596,6 +612,8 @@ export default function SubmitComplaint() {
                             {key === 'crime' && 'Routed to Police Station (PS)'}
                             {key === 'corruption' && 'Routed to Anti-Corruption Bureau (ACB)'}
                             {key === 'civic_issue' && 'Routed to Municipal Authority'}
+                            {key === 'fire' && 'Routed to Fire Department'}
+                            {key === 'hospital' && 'Routed to Healthcare & Hospital Authority'}
                           </div>
                         </div>
                         {form.category === key && <CheckCircle size={18} className="ml-auto text-brand-500 flex-shrink-0" />}
@@ -761,7 +779,7 @@ export default function SubmitComplaint() {
                     { label: 'Location', value: `${form.location.address}, ${form.location.district}, ${form.location.state}` },
                     { label: 'Attachments', value: `${files.length} file(s)` },
                     { label: 'Anonymous', value: form.isAnonymous ? '✅ Yes - Identity hidden' : '❌ No - Linked to account' },
-                    { label: 'Authority', value: form.category === 'crime' ? '🚔 Police Station (PS)' : form.category === 'corruption' ? '⚖️ Anti-Corruption Bureau' : '🏛️ Municipal Authority' },
+                    { label: 'Authority', value: form.category === 'crime' ? '🚔 Police Station (PS)' : form.category === 'corruption' ? '⚖️ Anti-Corruption Bureau' : form.category === 'fire' ? '🔥 Fire Department' : form.category === 'hospital' ? '🏥 Healthcare / Hospital' : '🏛️ Municipal Authority' },
                   ].map(({ label, value }) => (
                     <div key={label} className="px-4 py-3 flex gap-4">
                       <span className="text-sm text-slate-500 dark:text-slate-400 w-28 flex-shrink-0">{label}</span>

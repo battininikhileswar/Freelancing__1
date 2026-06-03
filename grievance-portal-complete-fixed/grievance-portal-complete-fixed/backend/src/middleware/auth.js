@@ -59,6 +59,8 @@ const ROLES = {
   PS_OFFICER: 'ps_officer',
   ACB_OFFICER: 'acb_officer',
   MUNICIPAL_OFFICER: 'municipal_officer',
+  FIRE_OFFICER: 'fire_officer',
+  HOSPITAL_OFFICER: 'hospital_officer',
   SUPER_ADMIN: 'super_admin',
 };
 

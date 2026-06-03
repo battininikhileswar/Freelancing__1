@@ -293,8 +293,8 @@
       "createdAt": "2026-05-29T03:42:40.882Z",
       "updatedAt": "2026-05-29T03:42:40.882Z",
       "id": "users-1780026160882-aoijw49ba",
-      "lastLoginAt": "2026-05-31T16:19:36.317Z",
-      "reputationPoints": 170,
+      "lastLoginAt": "2026-06-03T06:41:37.666Z",
+      "reputationPoints": 210,
       "badges": [
         "First Reporter",
         "Community Helper",
@@ -389,6 +389,384 @@
       "updatedAt": "2026-06-01T07:47:36.572Z",
       "lastLoginAt": "2026-06-01T07:47:36.572Z",
       "id": "users-1780300056603-bfornt9p0"
+    },
+    "users-1780468420080-ag2txqm1g": {
+      "name": "Super Admin",
+      "email": "admin@grievanceportal.gov.in",
+      "password": "$2a$12$Hvz/XalPhRMbij/9Df0PV.Cz8JUbgQLtcns4LGqDecRu24vJ09pV2",
+      "role": "super_admin",
+      "isActive": true,
+      "isVerified": true,
+      "state": "andhra pradesh",
+      "district": "guntur",
+      "createdAt": "2026-06-03T06:33:40.079Z",
+      "updatedAt": "2026-06-03T06:33:40.080Z",
+      "id": "users-1780468420080-ag2txqm1g"
+    },
+    "users-1780468420451-i3t2w0ima": {
+      "name": "Guntur PS",
+      "email": "ps.guntur@ap.gov.in",
+      "password": "$2a$12$Y6sRsPVL4nvbU6r8y6JJq.TI5nkTbVNA4wOK6vdPbUtygKTxxcgUi",
+      "phone": "9876543210",
+      "role": "ps_officer",
+      "authorityType": "ps",
+      "authorityId": "authorities-1780468420430-caiofeynb",
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "guntur"
+      },
+      "isActive": true,
+      "isVerified": true,
+      "state": "andhra pradesh",
+      "district": "guntur",
+      "createdAt": "2026-06-03T06:33:40.451Z",
+      "updatedAt": "2026-06-03T06:33:40.451Z",
+      "id": "users-1780468420451-i3t2w0ima"
+    },
+    "users-1780468420832-enpm5fzls": {
+      "name": "Vijayawada PS",
+      "email": "ps.vijayawada@ap.gov.in",
+      "password": "$2a$12$E5NfIgSUT2G74zyHbFHkE.218Qfp1nG7Tt1F4a2/Q9da8O6Lh78Ue",
+      "phone": "9876543211",
+      "role": "ps_officer",
+      "authorityType": "ps",
+      "authorityId": "authorities-1780468420812-1zzslth8w",
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "krishna"
+      },
+      "isActive": true,
+      "isVerified": true,
+      "state": "andhra pradesh",
+      "district": "krishna",
+      "createdAt": "2026-06-03T06:33:40.832Z",
+      "updatedAt": "2026-06-03T06:33:40.832Z",
+      "id": "users-1780468420832-enpm5fzls"
+    },
+    "users-1780468421203-3qvve1z7h": {
+      "name": "AP ACB Guntur",
+      "email": "acb.guntur@ap.gov.in",
+      "password": "$2a$12$SaixkaSC.FlsPrXm/bPiCeOCSA7.d0YyaXwOXSf52oTGVBZNcE0uG",
+      "phone": "9876543212",
+      "role": "acb_officer",
+      "authorityType": "acb",
+      "authorityId": "authorities-1780468421183-fbx6rnyrz",
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "guntur"
+      },
+      "isActive": true,
+      "isVerified": true,
+      "state": "andhra pradesh",
+      "district": "guntur",
+      "createdAt": "2026-06-03T06:33:41.203Z",
+      "updatedAt": "2026-06-03T06:33:41.203Z",
+      "id": "users-1780468421203-3qvve1z7h"
+    },
+    "users-1780468421573-i9nwckb6u": {
+      "name": "Guntur Municipal Corp",
+      "email": "municipal.guntur@ap.gov.in",
+      "password": "$2a$12$N6C76Ath0XPAwyfxhn2Z2OtbcrgZrRIu82HeaIcyMnAU805NsWdci",
+      "phone": "9876543213",
+      "role": "municipal_officer",
+      "authorityType": "municipal",
+      "authorityId": "authorities-1780468421550-iybpd1xq5",
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "guntur"
+      },
+      "isActive": true,
+      "isVerified": true,
+      "state": "andhra pradesh",
+      "district": "guntur",
+      "createdAt": "2026-06-03T06:33:41.573Z",
+      "updatedAt": "2026-06-03T06:33:41.573Z",
+      "id": "users-1780468421573-i9nwckb6u"
+    },
+    "users-1780468421940-qie1fkntl": {
+      "name": "Guntur Fire Dept",
+      "email": "fire.guntur@ap.gov.in",
+      "password": "$2a$12$6PCFTVmPH7CtEzNmnTlx1u18rkBuaw3sWuxIdZzpV3Tg28r1hdfci",
+      "phone": "9876543216",
+      "role": "fire_officer",
+      "authorityType": "fire",
+      "authorityId": "authorities-1780468421919-vy187ri5t",
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "guntur"
+      },
+      "isActive": true,
+      "isVerified": true,
+      "state": "andhra pradesh",
+      "district": "guntur",
+      "createdAt": "2026-06-03T06:33:41.940Z",
+      "updatedAt": "2026-06-03T06:33:41.940Z",
+      "id": "users-1780468421940-qie1fkntl",
+      "lastLoginAt": "2026-06-03T06:41:46.952Z"
+    },
+    "users-1780468422314-doh2qwd7c": {
+      "name": "Guntur General Hospital",
+      "email": "hospital.guntur@ap.gov.in",
+      "password": "$2a$12$HPHGBvVuHefols9uAgbR5Ow070DH/ilcj96BltGSoFSl2YObrdQKa",
+      "phone": "9876543217",
+      "role": "hospital_officer",
+      "authorityType": "hospital",
+      "authorityId": "authorities-1780468422290-pqu9dct38",
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "guntur"
+      },
+      "isActive": true,
+      "isVerified": true,
+      "state": "andhra pradesh",
+      "district": "guntur",
+      "createdAt": "2026-06-03T06:33:42.314Z",
+      "updatedAt": "2026-06-03T06:33:42.314Z",
+      "id": "users-1780468422314-doh2qwd7c",
+      "lastLoginAt": "2026-06-03T06:41:47.405Z"
+    },
+    "users-1780468422682-6gzfjifv7": {
+      "name": "Hyderabad PS",
+      "email": "ps.hyderabad@telangana.gov.in",
+      "password": "$2a$12$/PqKIw.B/85k.JO1qp3lGeJyn9CCdqrGP87I2YKpHzY5Fte7nKEfS",
+      "phone": "9876543214",
+      "role": "ps_officer",
+      "authorityType": "ps",
+      "authorityId": "authorities-1780468422662-ndbj9ppd6",
+      "jurisdiction": {
+        "state": "telangana",
+        "district": "hyderabad"
+      },
+      "isActive": true,
+      "isVerified": true,
+      "state": "telangana",
+      "district": "hyderabad",
+      "createdAt": "2026-06-03T06:33:42.682Z",
+      "updatedAt": "2026-06-03T06:33:42.682Z",
+      "id": "users-1780468422682-6gzfjifv7"
+    },
+    "users-1780468423051-uehy5guv8": {
+      "name": "Telangana ACB",
+      "email": "acb.hyd@telangana.gov.in",
+      "password": "$2a$12$Ct931VsLaJhduCAKqp/Mned6miqUnhHrsN6cXi71Fr6hLBiBXT4Oy",
+      "phone": "9876543215",
+      "role": "acb_officer",
+      "authorityType": "acb",
+      "authorityId": "authorities-1780468423029-i0omltpm4",
+      "jurisdiction": {
+        "state": "telangana",
+        "district": "hyderabad"
+      },
+      "isActive": true,
+      "isVerified": true,
+      "state": "telangana",
+      "district": "hyderabad",
+      "createdAt": "2026-06-03T06:33:43.051Z",
+      "updatedAt": "2026-06-03T06:33:43.051Z",
+      "id": "users-1780468423051-uehy5guv8"
+    },
+    "users-1780468423394-1ve9kxu3d": {
+      "name": "Ravi Kumar",
+      "email": "citizen@example.com",
+      "password": "$2a$12$n2W.9jvmOOGt7w8V9ha0KObCeGjql/COeQxOKgKvdLFu.06Dl5pDy",
+      "phone": "9000000001",
+      "role": "citizen",
+      "state": "andhra pradesh",
+      "district": "guntur",
+      "isActive": true,
+      "isVerified": true,
+      "complaintsCount": 0,
+      "createdAt": "2026-06-03T06:33:43.394Z",
+      "updatedAt": "2026-06-03T06:33:43.394Z",
+      "id": "users-1780468423394-1ve9kxu3d"
+    },
+    "users-1780468632784-3gc2an1bw": {
+      "name": "Super Admin",
+      "email": "admin@grievanceportal.gov.in",
+      "password": "$2a$12$v3ZMFG1YCTGqGWnP.9DTiuIXHbFB5P6xr1xbi6IBTOJEoCityubQm",
+      "role": "super_admin",
+      "isActive": true,
+      "isVerified": true,
+      "state": "andhra pradesh",
+      "district": "guntur",
+      "createdAt": "2026-06-03T06:37:12.783Z",
+      "updatedAt": "2026-06-03T06:37:12.784Z",
+      "id": "users-1780468632784-3gc2an1bw"
+    },
+    "users-1780468633159-qud9o3oxv": {
+      "name": "Guntur PS",
+      "email": "ps.guntur@ap.gov.in",
+      "password": "$2a$12$/yo..roLUNqIvveeShXThO.o1bF3l6e21FWEScIZlDI5YV30.iw1K",
+      "phone": "9876543210",
+      "role": "ps_officer",
+      "authorityType": "ps",
+      "authorityId": "authorities-1780468633136-5i2fzmmgo",
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "guntur"
+      },
+      "isActive": true,
+      "isVerified": true,
+      "state": "andhra pradesh",
+      "district": "guntur",
+      "createdAt": "2026-06-03T06:37:13.159Z",
+      "updatedAt": "2026-06-03T06:37:13.159Z",
+      "id": "users-1780468633159-qud9o3oxv"
+    },
+    "users-1780468633538-wzkx6je9y": {
+      "name": "Vijayawada PS",
+      "email": "ps.vijayawada@ap.gov.in",
+      "password": "$2a$12$wJVKlLW/l28d7bpVmPpG0.uxPf/6ib.usVV.0voyBLBclNOYnCFwi",
+      "phone": "9876543211",
+      "role": "ps_officer",
+      "authorityType": "ps",
+      "authorityId": "authorities-1780468633502-3itna5tyy",
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "krishna"
+      },
+      "isActive": true,
+      "isVerified": true,
+      "state": "andhra pradesh",
+      "district": "krishna",
+      "createdAt": "2026-06-03T06:37:13.538Z",
+      "updatedAt": "2026-06-03T06:37:13.538Z",
+      "id": "users-1780468633538-wzkx6je9y"
+    },
+    "users-1780468633904-hbfx8aa8z": {
+      "name": "AP ACB Guntur",
+      "email": "acb.guntur@ap.gov.in",
+      "password": "$2a$12$3mhnU1C3uBG/5k4tyn17NeU7C62ZpcwDlakCbhCluwd0BXFBN48LO",
+      "phone": "9876543212",
+      "role": "acb_officer",
+      "authorityType": "acb",
+      "authorityId": "authorities-1780468633881-7atcbbp30",
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "guntur"
+      },
+      "isActive": true,
+      "isVerified": true,
+      "state": "andhra pradesh",
+      "district": "guntur",
+      "createdAt": "2026-06-03T06:37:13.904Z",
+      "updatedAt": "2026-06-03T06:37:13.904Z",
+      "id": "users-1780468633904-hbfx8aa8z"
+    },
+    "users-1780468634276-k4hq2csrj": {
+      "name": "Guntur Municipal Corp",
+      "email": "municipal.guntur@ap.gov.in",
+      "password": "$2a$12$S1EwPOxlnvM0GUwZyp.Z6uvZHkqNeE.Hv8sj60IH3w6F4BR6k0u9C",
+      "phone": "9876543213",
+      "role": "municipal_officer",
+      "authorityType": "municipal",
+      "authorityId": "authorities-1780468634253-oz5fb4bg7",
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "guntur"
+      },
+      "isActive": true,
+      "isVerified": true,
+      "state": "andhra pradesh",
+      "district": "guntur",
+      "createdAt": "2026-06-03T06:37:14.276Z",
+      "updatedAt": "2026-06-03T06:37:14.276Z",
+      "id": "users-1780468634276-k4hq2csrj"
+    },
+    "users-1780468634642-kg20te0cs": {
+      "name": "Guntur Fire Dept",
+      "email": "fire.guntur@ap.gov.in",
+      "password": "$2a$12$SfQTk41m.POX63Wu/kpv/O2ri/UcUahI67baSDD9hFgCP0xn2Eg8e",
+      "phone": "9876543216",
+      "role": "fire_officer",
+      "authorityType": "fire",
+      "authorityId": "authorities-1780468634622-m1mo74jxr",
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "guntur"
+      },
+      "isActive": true,
+      "isVerified": true,
+      "state": "andhra pradesh",
+      "district": "guntur",
+      "createdAt": "2026-06-03T06:37:14.642Z",
+      "updatedAt": "2026-06-03T06:37:14.642Z",
+      "id": "users-1780468634642-kg20te0cs"
+    },
+    "users-1780468635022-8ti0sohgi": {
+      "name": "Guntur General Hospital",
+      "email": "hospital.guntur@ap.gov.in",
+      "password": "$2a$12$qsiXd8BaCFQaTVyj7vGIYOhppQgGB7zJcwH4CUnR8POjH1ujCOFB6",
+      "phone": "9876543217",
+      "role": "hospital_officer",
+      "authorityType": "hospital",
+      "authorityId": "authorities-1780468634996-tt3u5wokx",
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "guntur"
+      },
+      "isActive": true,
+      "isVerified": true,
+      "state": "andhra pradesh",
+      "district": "guntur",
+      "createdAt": "2026-06-03T06:37:15.022Z",
+      "updatedAt": "2026-06-03T06:37:15.022Z",
+      "id": "users-1780468635022-8ti0sohgi"
+    },
+    "users-1780468635400-wh5f7jwon": {
+      "name": "Hyderabad PS",
+      "email": "ps.hyderabad@telangana.gov.in",
+      "password": "$2a$12$tUcFz3uV3/4gvnoYxd9HvePR1pdTwXp2A0nZyaz6oe3ys2gwi./Am",
+      "phone": "9876543214",
+      "role": "ps_officer",
+      "authorityType": "ps",
+      "authorityId": "authorities-1780468635374-zl0epbkfg",
+      "jurisdiction": {
+        "state": "telangana",
+        "district": "hyderabad"
+      },
+      "isActive": true,
+      "isVerified": true,
+      "state": "telangana",
+      "district": "hyderabad",
+      "createdAt": "2026-06-03T06:37:15.400Z",
+      "updatedAt": "2026-06-03T06:37:15.400Z",
+      "id": "users-1780468635400-wh5f7jwon"
+    },
+    "users-1780468635765-3xvig0wn9": {
+      "name": "Telangana ACB",
+      "email": "acb.hyd@telangana.gov.in",
+      "password": "$2a$12$Z9nk.tmyukH74Z/9UTn.LOiZ8ubxYmxhJyxCSsB8UqixgLDmsIoCq",
+      "phone": "9876543215",
+      "role": "acb_officer",
+      "authorityType": "acb",
+      "authorityId": "authorities-1780468635744-pjw25zkfd",
+      "jurisdiction": {
+        "state": "telangana",
+        "district": "hyderabad"
+      },
+      "isActive": true,
+      "isVerified": true,
+      "state": "telangana",
+      "district": "hyderabad",
+      "createdAt": "2026-06-03T06:37:15.764Z",
+      "updatedAt": "2026-06-03T06:37:15.764Z",
+      "id": "users-1780468635765-3xvig0wn9"
+    },
+    "users-1780468636106-q247ooirx": {
+      "name": "Ravi Kumar",
+      "email": "citizen@example.com",
+      "password": "$2a$12$NWt27GSOmJeqnuZt4vBpeejxL3hSxhBIUeeF0PwU.7/5oF3TLCqyW",
+      "phone": "9000000001",
+      "role": "citizen",
+      "state": "andhra pradesh",
+      "district": "guntur",
+      "isActive": true,
+      "isVerified": true,
+      "complaintsCount": 0,
+      "createdAt": "2026-06-03T06:37:16.106Z",
+      "updatedAt": "2026-06-03T06:37:16.106Z",
+      "id": "users-1780468636106-q247ooirx"
     }
   },
   "complaints": {
@@ -829,6 +1207,190 @@
       "createdAt": "2026-05-31T10:51:01.796Z",
       "updatedAt": "2026-05-31T10:51:01.796Z",
       "id": "complaints-1780224661798-77042phvk"
+    },
+    "complaints-1780468818930-jhwr3p9u8": {
+      "complaintId": "GEN-AP-20260603-18CB07",
+      "category": "fire",
+      "subcategory": "fire_outbreak",
+      "description": "Large fire broke out at a warehouse near Guntur city center. Thick black smoke rising, immediate fire truck response needed.",
+      "location": {
+        "address": "Main Bazaar Road, Guntur",
+        "state": "andhra pradesh",
+        "district": "guntur",
+        "pincode": "",
+        "lat": 16.3067,
+        "lng": 80.4365
+      },
+      "isAnonymous": false,
+      "userId": "users-1780026160882-aoijw49ba",
+      "userName": "Ravi Kumar",
+      "userEmail": "citizen@example.com",
+      "userPhone": "9000000001",
+      "attachments": [],
+      "status": "pending",
+      "severity": "Emergency",
+      "severityReason": "The complaint describes a large fire outbreak with immediate need for fire truck response, posing a significant active safety threat.",
+      "routing": {
+        "authorityId": "authorities-1780468421919-vy187ri5t",
+        "authorityType": "fire",
+        "authorityName": "Guntur Fire Dept",
+        "assignedAt": "2026-06-03T06:40:18.916Z"
+      },
+      "statusHistory": [
+        {
+          "status": "pending",
+          "remarks": "Complaint registered and routed to authority.",
+          "timestamp": "2026-06-03T06:40:18.916Z",
+          "updatedBy": "system"
+        }
+      ],
+      "remarks": [],
+      "proofUploads": [],
+      "preferredLanguage": "en",
+      "escalationLevel": 0,
+      "escalationDue": "2026-06-06T06:40:16.093Z",
+      "isEscalated": false,
+      "createdAt": "2026-06-03T06:40:18.916Z",
+      "updatedAt": "2026-06-03T06:40:18.916Z",
+      "id": "complaints-1780468818930-jhwr3p9u8"
+    },
+    "complaints-1780468822641-1yocmiaza": {
+      "complaintId": "GEN-AP-20260603-440351",
+      "category": "hospital",
+      "subcategory": "hospital_infra",
+      "description": "Infectious medical waste (syringes, bottles) dumped open behind the clinic. Dangerous for children.",
+      "location": {
+        "address": "GGeneral Hospital Road, Guntur",
+        "state": "andhra pradesh",
+        "district": "guntur",
+        "pincode": "",
+        "lat": 16.3075,
+        "lng": 80.437
+      },
+      "isAnonymous": false,
+      "userId": "users-1780026160882-aoijw49ba",
+      "userName": "Ravi Kumar",
+      "userEmail": "citizen@example.com",
+      "userPhone": "9000000001",
+      "attachments": [],
+      "status": "pending",
+      "severity": "High",
+      "severityReason": "The complaint involves infectious medical waste being openly dumped, posing a significant health risk to the public, especially children.",
+      "routing": {
+        "authorityId": "authorities-1780468422290-pqu9dct38",
+        "authorityType": "hospital",
+        "authorityName": "Guntur General Hospital",
+        "assignedAt": "2026-06-03T06:40:22.629Z"
+      },
+      "statusHistory": [
+        {
+          "status": "pending",
+          "remarks": "Complaint registered and routed to authority.",
+          "timestamp": "2026-06-03T06:40:22.629Z",
+          "updatedBy": "system"
+        }
+      ],
+      "remarks": [],
+      "proofUploads": [],
+      "preferredLanguage": "en",
+      "escalationLevel": 0,
+      "escalationDue": "2026-06-06T06:40:21.833Z",
+      "isEscalated": false,
+      "createdAt": "2026-06-03T06:40:22.629Z",
+      "updatedAt": "2026-06-03T06:40:22.629Z",
+      "id": "complaints-1780468822641-1yocmiaza"
+    },
+    "complaints-1780468899970-cnyr19ukl": {
+      "complaintId": "GEN-AP-20260603-BAEA9F",
+      "category": "fire",
+      "subcategory": "fire_outbreak",
+      "description": "Large fire broke out at a warehouse near Guntur city center. Thick black smoke rising, immediate fire truck response needed.",
+      "location": {
+        "address": "Main Bazaar Road, Guntur",
+        "state": "andhra pradesh",
+        "district": "guntur",
+        "pincode": "",
+        "lat": 16.3067,
+        "lng": 80.4365
+      },
+      "isAnonymous": false,
+      "userId": "users-1780026160882-aoijw49ba",
+      "userName": "Ravi Kumar",
+      "userEmail": "citizen@example.com",
+      "userPhone": "9000000001",
+      "attachments": [],
+      "status": "pending",
+      "severity": "Emergency",
+      "severityReason": "The complaint describes a large fire outbreak with immediate need for fire truck response, posing an active safety threat.",
+      "routing": {
+        "authorityId": "authorities-1780468421919-vy187ri5t",
+        "authorityType": "fire",
+        "authorityName": "Guntur Fire Dept",
+        "assignedAt": "2026-06-03T06:41:39.949Z"
+      },
+      "statusHistory": [
+        {
+          "status": "pending",
+          "remarks": "Complaint registered and routed to authority.",
+          "timestamp": "2026-06-03T06:41:39.949Z",
+          "updatedBy": "system"
+        }
+      ],
+      "remarks": [],
+      "proofUploads": [],
+      "preferredLanguage": "en",
+      "escalationLevel": 0,
+      "escalationDue": "2026-06-06T06:41:37.747Z",
+      "isEscalated": false,
+      "createdAt": "2026-06-03T06:41:39.949Z",
+      "updatedAt": "2026-06-03T06:41:39.949Z",
+      "id": "complaints-1780468899970-cnyr19ukl"
+    },
+    "complaints-1780468903826-gqsx6zzpp": {
+      "complaintId": "GEN-AP-20260603-008AE4",
+      "category": "hospital",
+      "subcategory": "hospital_infra",
+      "description": "Infectious medical waste (syringes, bottles) dumped open behind the clinic. Dangerous for children.",
+      "location": {
+        "address": "GGeneral Hospital Road, Guntur",
+        "state": "andhra pradesh",
+        "district": "guntur",
+        "pincode": "",
+        "lat": 16.3075,
+        "lng": 80.437
+      },
+      "isAnonymous": false,
+      "userId": "users-1780026160882-aoijw49ba",
+      "userName": "Ravi Kumar",
+      "userEmail": "citizen@example.com",
+      "userPhone": "9000000001",
+      "attachments": [],
+      "status": "pending",
+      "severity": "High",
+      "severityReason": "The complaint involves infectious medical waste being dumped openly, posing a significant health risk to the public, especially children.",
+      "routing": {
+        "authorityId": "authorities-1780468422290-pqu9dct38",
+        "authorityType": "hospital",
+        "authorityName": "Guntur General Hospital",
+        "assignedAt": "2026-06-03T06:41:43.810Z"
+      },
+      "statusHistory": [
+        {
+          "status": "pending",
+          "remarks": "Complaint registered and routed to authority.",
+          "timestamp": "2026-06-03T06:41:43.810Z",
+          "updatedBy": "system"
+        }
+      ],
+      "remarks": [],
+      "proofUploads": [],
+      "preferredLanguage": "en",
+      "escalationLevel": 0,
+      "escalationDue": "2026-06-06T06:41:42.848Z",
+      "isEscalated": false,
+      "createdAt": "2026-06-03T06:41:43.810Z",
+      "updatedAt": "2026-06-03T06:41:43.810Z",
+      "id": "complaints-1780468903826-gqsx6zzpp"
     }
   },
   "escalations": {},
@@ -952,6 +1514,326 @@
       },
       "createdAt": "2026-05-29T03:42:40.669Z",
       "id": "authorities-1780026160669-zfqef22ut"
+    },
+    "authorities-1780468420430-caiofeynb": {
+      "name": "Guntur PS",
+      "email": "ps.guntur@ap.gov.in",
+      "phone": "9876543210",
+      "type": "ps",
+      "isActive": true,
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "guntur",
+        "districts": [
+          "guntur"
+        ]
+      },
+      "location": {
+        "lat": 16.3067,
+        "lng": 80.4365
+      },
+      "createdAt": "2026-06-03T06:33:40.430Z",
+      "id": "authorities-1780468420430-caiofeynb"
+    },
+    "authorities-1780468420812-1zzslth8w": {
+      "name": "Vijayawada PS",
+      "email": "ps.vijayawada@ap.gov.in",
+      "phone": "9876543211",
+      "type": "ps",
+      "isActive": true,
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "krishna",
+        "districts": [
+          "krishna"
+        ]
+      },
+      "location": {
+        "lat": 16.5062,
+        "lng": 80.648
+      },
+      "createdAt": "2026-06-03T06:33:40.812Z",
+      "id": "authorities-1780468420812-1zzslth8w"
+    },
+    "authorities-1780468421183-fbx6rnyrz": {
+      "name": "AP ACB Guntur",
+      "email": "acb.guntur@ap.gov.in",
+      "phone": "9876543212",
+      "type": "acb",
+      "isActive": true,
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "guntur",
+        "districts": [
+          "guntur"
+        ]
+      },
+      "location": {
+        "lat": 16.3067,
+        "lng": 80.4365
+      },
+      "createdAt": "2026-06-03T06:33:41.183Z",
+      "id": "authorities-1780468421183-fbx6rnyrz"
+    },
+    "authorities-1780468421550-iybpd1xq5": {
+      "name": "Guntur Municipal Corp",
+      "email": "municipal.guntur@ap.gov.in",
+      "phone": "9876543213",
+      "type": "municipal",
+      "isActive": true,
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "guntur",
+        "districts": [
+          "guntur"
+        ]
+      },
+      "location": {
+        "lat": 16.3067,
+        "lng": 80.4365
+      },
+      "createdAt": "2026-06-03T06:33:41.550Z",
+      "id": "authorities-1780468421550-iybpd1xq5"
+    },
+    "authorities-1780468421919-vy187ri5t": {
+      "name": "Guntur Fire Dept",
+      "email": "fire.guntur@ap.gov.in",
+      "phone": "9876543216",
+      "type": "fire",
+      "isActive": true,
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "guntur",
+        "districts": [
+          "guntur"
+        ]
+      },
+      "location": {
+        "lat": 16.3067,
+        "lng": 80.4365
+      },
+      "createdAt": "2026-06-03T06:33:41.919Z",
+      "id": "authorities-1780468421919-vy187ri5t"
+    },
+    "authorities-1780468422290-pqu9dct38": {
+      "name": "Guntur General Hospital",
+      "email": "hospital.guntur@ap.gov.in",
+      "phone": "9876543217",
+      "type": "hospital",
+      "isActive": true,
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "guntur",
+        "districts": [
+          "guntur"
+        ]
+      },
+      "location": {
+        "lat": 16.3067,
+        "lng": 80.4365
+      },
+      "createdAt": "2026-06-03T06:33:42.290Z",
+      "id": "authorities-1780468422290-pqu9dct38"
+    },
+    "authorities-1780468422662-ndbj9ppd6": {
+      "name": "Hyderabad PS",
+      "email": "ps.hyderabad@telangana.gov.in",
+      "phone": "9876543214",
+      "type": "ps",
+      "isActive": true,
+      "jurisdiction": {
+        "state": "telangana",
+        "district": "hyderabad",
+        "districts": [
+          "hyderabad"
+        ]
+      },
+      "location": {
+        "lat": 17.385,
+        "lng": 78.4867
+      },
+      "createdAt": "2026-06-03T06:33:42.662Z",
+      "id": "authorities-1780468422662-ndbj9ppd6"
+    },
+    "authorities-1780468423029-i0omltpm4": {
+      "name": "Telangana ACB",
+      "email": "acb.hyd@telangana.gov.in",
+      "phone": "9876543215",
+      "type": "acb",
+      "isActive": true,
+      "jurisdiction": {
+        "state": "telangana",
+        "district": "hyderabad",
+        "districts": [
+          "hyderabad"
+        ]
+      },
+      "location": {
+        "lat": 17.385,
+        "lng": 78.4867
+      },
+      "createdAt": "2026-06-03T06:33:43.029Z",
+      "id": "authorities-1780468423029-i0omltpm4"
+    },
+    "authorities-1780468633136-5i2fzmmgo": {
+      "name": "Guntur PS",
+      "email": "ps.guntur@ap.gov.in",
+      "phone": "9876543210",
+      "type": "ps",
+      "isActive": true,
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "guntur",
+        "districts": [
+          "guntur"
+        ]
+      },
+      "location": {
+        "lat": 16.3067,
+        "lng": 80.4365
+      },
+      "createdAt": "2026-06-03T06:37:13.136Z",
+      "id": "authorities-1780468633136-5i2fzmmgo"
+    },
+    "authorities-1780468633502-3itna5tyy": {
+      "name": "Vijayawada PS",
+      "email": "ps.vijayawada@ap.gov.in",
+      "phone": "9876543211",
+      "type": "ps",
+      "isActive": true,
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "krishna",
+        "districts": [
+          "krishna"
+        ]
+      },
+      "location": {
+        "lat": 16.5062,
+        "lng": 80.648
+      },
+      "createdAt": "2026-06-03T06:37:13.502Z",
+      "id": "authorities-1780468633502-3itna5tyy"
+    },
+    "authorities-1780468633881-7atcbbp30": {
+      "name": "AP ACB Guntur",
+      "email": "acb.guntur@ap.gov.in",
+      "phone": "9876543212",
+      "type": "acb",
+      "isActive": true,
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "guntur",
+        "districts": [
+          "guntur"
+        ]
+      },
+      "location": {
+        "lat": 16.3067,
+        "lng": 80.4365
+      },
+      "createdAt": "2026-06-03T06:37:13.881Z",
+      "id": "authorities-1780468633881-7atcbbp30"
+    },
+    "authorities-1780468634253-oz5fb4bg7": {
+      "name": "Guntur Municipal Corp",
+      "email": "municipal.guntur@ap.gov.in",
+      "phone": "9876543213",
+      "type": "municipal",
+      "isActive": true,
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "guntur",
+        "districts": [
+          "guntur"
+        ]
+      },
+      "location": {
+        "lat": 16.3067,
+        "lng": 80.4365
+      },
+      "createdAt": "2026-06-03T06:37:14.253Z",
+      "id": "authorities-1780468634253-oz5fb4bg7"
+    },
+    "authorities-1780468634622-m1mo74jxr": {
+      "name": "Guntur Fire Dept",
+      "email": "fire.guntur@ap.gov.in",
+      "phone": "9876543216",
+      "type": "fire",
+      "isActive": true,
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "guntur",
+        "districts": [
+          "guntur"
+        ]
+      },
+      "location": {
+        "lat": 16.3067,
+        "lng": 80.4365
+      },
+      "createdAt": "2026-06-03T06:37:14.622Z",
+      "id": "authorities-1780468634622-m1mo74jxr"
+    },
+    "authorities-1780468634996-tt3u5wokx": {
+      "name": "Guntur General Hospital",
+      "email": "hospital.guntur@ap.gov.in",
+      "phone": "9876543217",
+      "type": "hospital",
+      "isActive": true,
+      "jurisdiction": {
+        "state": "andhra pradesh",
+        "district": "guntur",
+        "districts": [
+          "guntur"
+        ]
+      },
+      "location": {
+        "lat": 16.3067,
+        "lng": 80.4365
+      },
+      "createdAt": "2026-06-03T06:37:14.996Z",
+      "id": "authorities-1780468634996-tt3u5wokx"
+    },
+    "authorities-1780468635374-zl0epbkfg": {
+      "name": "Hyderabad PS",
+      "email": "ps.hyderabad@telangana.gov.in",
+      "phone": "9876543214",
+      "type": "ps",
+      "isActive": true,
+      "jurisdiction": {
+        "state": "telangana",
+        "district": "hyderabad",
+        "districts": [
+          "hyderabad"
+        ]
+      },
+      "location": {
+        "lat": 17.385,
+        "lng": 78.4867
+      },
+      "createdAt": "2026-06-03T06:37:15.374Z",
+      "id": "authorities-1780468635374-zl0epbkfg"
+    },
+    "authorities-1780468635744-pjw25zkfd": {
+      "name": "Telangana ACB",
+      "email": "acb.hyd@telangana.gov.in",
+      "phone": "9876543215",
+      "type": "acb",
+      "isActive": true,
+      "jurisdiction": {
+        "state": "telangana",
+        "district": "hyderabad",
+        "districts": [
+          "hyderabad"
+        ]
+      },
+      "location": {
+        "lat": 17.385,
+        "lng": 78.4867
+      },
+      "createdAt": "2026-06-03T06:37:15.744Z",
+      "id": "authorities-1780468635744-pjw25zkfd"
     }
   },
   "notifications": {
@@ -1118,6 +2000,54 @@
       "isRead": false,
       "createdAt": "2026-05-31T10:52:42.131Z",
       "id": "notifications-1780224762131-ij27jnr17"
+    },
+    "notifications-1780468821686-2w235re10": {
+      "userId": "users-1780026160882-aoijw49ba",
+      "type": "complaint_submitted",
+      "title": "Complaint Registered",
+      "message": "Your complaint GEN-AP-20260603-18CB07 has been submitted successfully.",
+      "metadata": {
+        "complaintId": "GEN-AP-20260603-18CB07"
+      },
+      "isRead": false,
+      "createdAt": "2026-06-03T06:40:21.686Z",
+      "id": "notifications-1780468821686-2w235re10"
+    },
+    "notifications-1780468825698-zjkorq1pa": {
+      "userId": "users-1780026160882-aoijw49ba",
+      "type": "complaint_submitted",
+      "title": "Complaint Registered",
+      "message": "Your complaint GEN-AP-20260603-440351 has been submitted successfully.",
+      "metadata": {
+        "complaintId": "GEN-AP-20260603-440351"
+      },
+      "isRead": false,
+      "createdAt": "2026-06-03T06:40:25.698Z",
+      "id": "notifications-1780468825698-zjkorq1pa"
+    },
+    "notifications-1780468902794-doi3ssx1r": {
+      "userId": "users-1780026160882-aoijw49ba",
+      "type": "complaint_submitted",
+      "title": "Complaint Registered",
+      "message": "Your complaint GEN-AP-20260603-BAEA9F has been submitted successfully.",
+      "metadata": {
+        "complaintId": "GEN-AP-20260603-BAEA9F"
+      },
+      "isRead": false,
+      "createdAt": "2026-06-03T06:41:42.794Z",
+      "id": "notifications-1780468902794-doi3ssx1r"
+    },
+    "notifications-1780468906575-8oa6i91go": {
+      "userId": "users-1780026160882-aoijw49ba",
+      "type": "complaint_submitted",
+      "title": "Complaint Registered",
+      "message": "Your complaint GEN-AP-20260603-008AE4 has been submitted successfully.",
+      "metadata": {
+        "complaintId": "GEN-AP-20260603-008AE4"
+      },
+      "isRead": false,
+      "createdAt": "2026-06-03T06:41:46.575Z",
+      "id": "notifications-1780468906575-8oa6i91go"
     }
   }
 }

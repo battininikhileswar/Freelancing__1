@@ -30,6 +30,16 @@ const NAV_CONFIG = {
     { to: '/municipal-dashboard?tab=escalated', icon: AlertTriangle, label: 'Escalated', badge: 'escalated' },
     { to: '/profile', icon: UserCircle, label: 'My Account' },
   ],
+  fire_officer: [
+    { to: '/fire-dashboard', icon: LayoutDashboard, label: 'Dashboard', end: true },
+    { to: '/fire-dashboard?tab=escalated', icon: AlertTriangle, label: 'Escalated', badge: 'escalated' },
+    { to: '/profile', icon: UserCircle, label: 'My Account' },
+  ],
+  hospital_officer: [
+    { to: '/hospital-dashboard', icon: LayoutDashboard, label: 'Dashboard', end: true },
+    { to: '/hospital-dashboard?tab=escalated', icon: AlertTriangle, label: 'Escalated', badge: 'escalated' },
+    { to: '/profile', icon: UserCircle, label: 'My Account' },
+  ],
   super_admin: [
     { to: '/admin', icon: LayoutDashboard, label: 'Overview', end: true },
     { to: '/admin/users', icon: Users, label: 'Users' },
@@ -47,6 +57,8 @@ const ROLE_INFO = {
   ps_officer: { label: 'Police Station', colorClass: 'bg-blue-800', icon: '🚔' },
   acb_officer: { label: 'ACB Department', colorClass: 'bg-purple-700', icon: '⚖️' },
   municipal_officer: { label: 'Municipal Auth.', colorClass: 'bg-teal-600', icon: '🏛️' },
+  fire_officer: { label: 'Fire Department', colorClass: 'bg-orange-600', icon: '🔥' },
+  hospital_officer: { label: 'Hospital Auth.', colorClass: 'bg-rose-600', icon: '🏥' },
   super_admin: { label: 'Admin Panel', colorClass: 'bg-red-600', icon: '🔐' },
 };
 

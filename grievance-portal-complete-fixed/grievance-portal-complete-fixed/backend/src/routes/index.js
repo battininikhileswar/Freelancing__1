@@ -123,8 +123,8 @@ complaintRouter.get('/my', verifyToken, authorize(ROLES.CITIZEN), getMyComplaint
 complaintRouter.get('/:id', verifyToken, getComplaintDetail);
 
 // Authority routes
-complaintRouter.get('/authority/assigned', verifyToken, authorize(ROLES.PS_OFFICER, ROLES.ACB_OFFICER, ROLES.MUNICIPAL_OFFICER, ROLES.SUPER_ADMIN), getAssignedComplaints);
-complaintRouter.put('/:id/status', verifyToken, authorize(ROLES.PS_OFFICER, ROLES.ACB_OFFICER, ROLES.MUNICIPAL_OFFICER, ROLES.SUPER_ADMIN), upload.array('proofs', 3), statusUpdateValidator, updateComplaintStatus);
+complaintRouter.get('/authority/assigned', verifyToken, authorize(ROLES.PS_OFFICER, ROLES.ACB_OFFICER, ROLES.MUNICIPAL_OFFICER, ROLES.FIRE_OFFICER, ROLES.HOSPITAL_OFFICER, ROLES.SUPER_ADMIN), getAssignedComplaints);
+complaintRouter.put('/:id/status', verifyToken, authorize(ROLES.PS_OFFICER, ROLES.ACB_OFFICER, ROLES.MUNICIPAL_OFFICER, ROLES.FIRE_OFFICER, ROLES.HOSPITAL_OFFICER, ROLES.SUPER_ADMIN), upload.array('proofs', 3), statusUpdateValidator, updateComplaintStatus);
 
 // Admin analytics
 complaintRouter.get('/admin/analytics', verifyToken, authorize(ROLES.SUPER_ADMIN), getAnalytics);

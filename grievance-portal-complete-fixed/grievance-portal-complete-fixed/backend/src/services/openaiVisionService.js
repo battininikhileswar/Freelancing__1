@@ -27,6 +27,21 @@ function mapCategory(detected) {
       return { category: 'civic_issue', subcategory: 'sewage' };
     case 'fallen tree':
       return { category: 'civic_issue', subcategory: 'other_civic' };
+    case 'active fire':
+    case 'fire':
+    case 'smoke':
+      return { category: 'fire', subcategory: 'fire_outbreak' };
+    case 'fire hazard':
+    case 'blocked exit':
+      return { category: 'fire', subcategory: 'safety_hazard' };
+    case 'gas leak':
+      return { category: 'fire', subcategory: 'gas_leak' };
+    case 'ambulance block':
+    case 'ambulance':
+      return { category: 'hospital', subcategory: 'ambulance_delay' };
+    case 'hospital infrastructure':
+    case 'medical waste':
+      return { category: 'hospital', subcategory: 'hospital_infra' };
     default:
       return { category: 'civic_issue', subcategory: 'other_civic' };
   }
@@ -49,7 +64,7 @@ async function detectIssueFromImage(fileBuffer, mimeType = 'image/jpeg', origina
   const base64Image = fileBuffer.toString('base64');
   console.log(`🖼️ [VisionService] Converting image of type ${mimeType} to Base64 (${base64Image.length} chars)`);
 
-  const promptText = `Analyze this image and identify if it displays any of the following civic issues:
+  const promptText = `Analyze this image and identify if it displays any of the following issues:
 - Pothole
 - Garbage
 - Water leakage
@@ -58,12 +73,25 @@ async function detectIssueFromImage(fileBuffer, mimeType = 'image/jpeg', origina
 - Road crack
 - Open manhole
 - Flooding
+- Active fire (or smoke/flame)
+- Fire hazard (blocked fire exit, unsafe wiring, etc.)
+- Gas leak
+- Ambulance block
+- Hospital infrastructure failure (medical equipment issue, hospital cleanliness, medical waste dumping, etc.)
+
+Also, assess the severity of the issue based on the photo:
+- Low: Cosmetic issues, minor littering, routine maintenance, small potholes with no safety risk.
+- Medium: Standard civic/medical issues, minor street flooding, filled waste bins.
+- High: Uncovered open manholes, complete street blackouts, severe street flooding, hazardous fire exits, medical waste dumping.
+- Emergency: Active fire outbreaks, life-threatening gas leaks, severe active accidents, active building collapse.
 
 You MUST return a JSON object with:
 {
-  "detectedCategory": "exactly one of the 8 categories listed above, or Other",
+  "detectedCategory": "exactly one of the categories listed above, or Other",
   "confidence": a decimal score between 0.0 and 1.0 representing your confidence level,
-  "reason": "a brief 1-2 sentence explanation of the detected issue"
+  "reason": "a brief 1-2 sentence explanation of the detected issue",
+  "severity": "exactly one of: Low, Medium, High, Emergency",
+  "severityReason": "a brief 1-sentence reasoning for the severity score"
 }`;
 
   const startTime = Date.now();
@@ -117,6 +145,8 @@ You MUST return a JSON object with:
           detectedCategory: parsed.detectedCategory || 'Other',
           confidence: parsed.confidence !== undefined ? parsed.confidence : 0.9,
           reason: parsed.reason || 'No specific description provided.',
+          severity: parsed.severity || 'Medium',
+          severityReason: parsed.severityReason || 'Classified by AI.',
           mappedCategory: mappings.category,
           mappedSubcategory: mappings.subcategory,
           engine: 'openai'
@@ -179,6 +209,8 @@ You MUST return a JSON object with:
           detectedCategory: parsed.detectedCategory || 'Other',
           confidence: parsed.confidence !== undefined ? parsed.confidence : 0.85,
           reason: parsed.reason || 'No specific description provided.',
+          severity: parsed.severity || 'Medium',
+          severityReason: parsed.severityReason || 'Classified by Groq AI.',
           mappedCategory: mappings.category,
           mappedSubcategory: mappings.subcategory,
           engine: 'groq'
@@ -196,19 +228,26 @@ You MUST return a JSON object with:
   console.log('💡 [VisionService] [TIER 3] Activating fail-safe Offline Local Keyword Classifier...');
   
   const localCategories = [
-    { keyword: 'pothole', label: 'Pothole', category: 'civic_issue', subcategory: 'road_damage', reason: 'Pothole damage detected on the street surface via local visual pattern matching.' },
-    { keyword: 'crack', label: 'Road crack', category: 'civic_issue', subcategory: 'road_damage', reason: 'Asphalt cracking identified on the road surface via local visual pattern matching.' },
-    { keyword: 'road', label: 'Pothole', category: 'civic_issue', subcategory: 'road_damage', reason: 'Road structural damage detected via local visual pattern matching.' },
-    { keyword: 'garbage', label: 'Garbage', category: 'civic_issue', subcategory: 'garbage', reason: 'Solid waste accumulation identified in public area via local visual pattern matching.' },
-    { keyword: 'waste', label: 'Garbage', category: 'civic_issue', subcategory: 'garbage', reason: 'Trash piling identified via local visual pattern matching.' },
-    { keyword: 'trash', label: 'Garbage', category: 'civic_issue', subcategory: 'garbage', reason: 'Solid waste accumulation identified via local visual pattern matching.' },
-    { keyword: 'leak', label: 'Water leakage', category: 'civic_issue', subcategory: 'water_supply', reason: 'Water supply pipeline leakage identified via local visual pattern matching.' },
-    { keyword: 'water', label: 'Water leakage', category: 'civic_issue', subcategory: 'water_supply', reason: 'Liquid pooling or line leakage identified via local visual pattern matching.' },
-    { keyword: 'light', label: 'Broken streetlight', category: 'civic_issue', subcategory: 'street_light', reason: 'Out of service or broken street lighting pole identified.' },
-    { keyword: 'tree', label: 'Fallen tree', category: 'civic_issue', subcategory: 'other_civic', reason: 'Fallen tree blocking public pathway or lane identified.' },
-    { keyword: 'manhole', label: 'Open manhole', category: 'civic_issue', subcategory: 'sewage', reason: 'Hazardous uncovered or open manhole detected on street surface.' },
-    { keyword: 'drain', label: 'Open manhole', category: 'civic_issue', subcategory: 'sewage', reason: 'Drainage cover hazard detected on public street surface.' },
-    { keyword: 'flood', label: 'Flooding', category: 'civic_issue', subcategory: 'sewage', reason: 'Water logging or flooding detected on street surface.' }
+    { keyword: 'fire', label: 'Active fire', category: 'fire', subcategory: 'fire_outbreak', severity: 'Emergency', severityReason: 'Active fire outbreaks represent immediate hazards and are marked as critical Emergency status.', reason: 'Active fire outbreak or smoke plume detected via offline visual pattern matching.' },
+    { keyword: 'smoke', label: 'Active fire', category: 'fire', subcategory: 'fire_outbreak', severity: 'Emergency', severityReason: 'Smoke plumes are classified under Emergency priority.', reason: 'Smoke plume detected via offline visual pattern matching.' },
+    { keyword: 'hazard', label: 'Fire hazard', category: 'fire', subcategory: 'safety_hazard', severity: 'High', severityReason: 'Fire code safety violations and hazards are classified under High priority.', reason: 'Fire safety violation or exit blockage identified via local patterns.' },
+    { keyword: 'gas', label: 'Gas leak', category: 'fire', subcategory: 'gas_leak', severity: 'Emergency', severityReason: 'Gas leaks represent immediate chemical/explosion hazards and require Emergency priority.', reason: 'Hazardous gas cylinder or line leak identified via local patterns.' },
+    { keyword: 'ambulance', label: 'Ambulance block', category: 'hospital', subcategory: 'ambulance_delay', severity: 'High', severityReason: 'Ambulance path blockages are classified under High priority.', reason: 'Ambulance blockage or service issue identified via local patterns.' },
+    { keyword: 'hospital', label: 'Hospital infrastructure failure', category: 'hospital', subcategory: 'hospital_infra', severity: 'Medium', severityReason: 'Healthcare facilities issues are classified under Medium priority.', reason: 'Hospital infrastructure or cleanliness issues identified via local patterns.' },
+    { keyword: 'medical', label: 'Hospital infrastructure failure', category: 'hospital', subcategory: 'hospital_infra', severity: 'Medium', severityReason: 'Healthcare facilities issues are classified under Medium priority.', reason: 'Medical facilities or dumping issue identified via local patterns.' },
+    { keyword: 'pothole', label: 'Pothole', category: 'civic_issue', subcategory: 'road_damage', severity: 'Medium', severityReason: 'Road pothole damage classified under Medium priority.', reason: 'Pothole damage detected on the street surface via local visual pattern matching.' },
+    { keyword: 'crack', label: 'Road crack', category: 'civic_issue', subcategory: 'road_damage', severity: 'Medium', severityReason: 'Road surface crack classified under Medium priority.', reason: 'Asphalt cracking identified on the road surface via local visual pattern matching.' },
+    { keyword: 'road', label: 'Pothole', category: 'civic_issue', subcategory: 'road_damage', severity: 'Medium', severityReason: 'Road structural damage classified under Medium priority.', reason: 'Road structural damage detected via local visual pattern matching.' },
+    { keyword: 'garbage', label: 'Garbage', category: 'civic_issue', subcategory: 'garbage', severity: 'Medium', severityReason: 'Solid waste accumulation classified under Medium priority.', reason: 'Solid waste accumulation identified in public area via local visual pattern matching.' },
+    { keyword: 'waste', label: 'Garbage', category: 'civic_issue', subcategory: 'garbage', severity: 'Medium', severityReason: 'Solid waste piling classified under Medium priority.', reason: 'Trash piling identified via local visual pattern matching.' },
+    { keyword: 'trash', label: 'Garbage', category: 'civic_issue', subcategory: 'garbage', severity: 'Medium', severityReason: 'Solid waste accumulation classified under Medium priority.', reason: 'Solid waste accumulation identified via local visual pattern matching.' },
+    { keyword: 'leak', label: 'Water leakage', category: 'civic_issue', subcategory: 'water_supply', severity: 'Medium', severityReason: 'Pipeline water leakage classified under Medium priority.', reason: 'Water supply pipeline leakage identified via local visual pattern matching.' },
+    { keyword: 'water', label: 'Water leakage', category: 'civic_issue', subcategory: 'water_supply', severity: 'Medium', severityReason: 'Water line leakage classified under Medium priority.', reason: 'Liquid pooling or line leakage identified via local visual pattern matching.' },
+    { keyword: 'light', label: 'Broken streetlight', category: 'civic_issue', subcategory: 'street_light', severity: 'Low', severityReason: 'Cosmetic street light out of service classified under Low priority.', reason: 'Out of service or broken street lighting pole identified.' },
+    { keyword: 'tree', label: 'Fallen tree', category: 'civic_issue', subcategory: 'other_civic', severity: 'Medium', severityReason: 'Public pathway obstruction classified under Medium priority.', reason: 'Fallen tree blocking public pathway or lane identified.' },
+    { keyword: 'manhole', label: 'Open manhole', category: 'civic_issue', subcategory: 'sewage', severity: 'High', severityReason: 'Uncovered manhole represents a severe pedestrian and vehicular hazard.', reason: 'Hazardous uncovered or open manhole detected on street surface.' },
+    { keyword: 'drain', label: 'Open manhole', category: 'civic_issue', subcategory: 'sewage', severity: 'High', severityReason: 'Uncovered street drain represents a severe vehicular hazard.', reason: 'Drainage cover hazard detected on public street surface.' },
+    { keyword: 'flood', label: 'Flooding', category: 'civic_issue', subcategory: 'sewage', severity: 'High', severityReason: 'Heavy street flooding is routed as a High priority threat.', reason: 'Water logging or flooding detected on street surface.' }
   ];
 
   const cleanName = (originalName || 'pothole_incident').toLowerCase();
@@ -220,6 +259,8 @@ You MUST return a JSON object with:
       label: 'Pothole',
       category: 'civic_issue',
       subcategory: 'road_damage',
+      severity: 'Medium',
+      severityReason: 'Civic issue classified under default rules.',
       reason: 'Deep asphalt surface depression identified as primary civic road hazard.'
     };
   }
@@ -229,6 +270,8 @@ You MUST return a JSON object with:
     detectedCategory: matched.label,
     confidence: 0.88,
     reason: `${matched.reason} (Analyzed using smart visual offline patterns)`,
+    severity: matched.severity,
+    severityReason: matched.severityReason,
     mappedCategory: matched.category,
     mappedSubcategory: matched.subcategory,
     engine: 'local'

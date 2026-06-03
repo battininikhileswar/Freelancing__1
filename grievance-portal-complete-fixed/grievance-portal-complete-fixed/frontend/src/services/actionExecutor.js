@@ -937,6 +937,8 @@ export const actionExecutor = {
               ps_officer: '/ps-dashboard',
               acb_officer: '/acb-dashboard',
               municipal_officer: '/municipal-dashboard',
+              fire_officer: '/fire-dashboard',
+              hospital_officer: '/hospital-dashboard',
               super_admin: '/admin',
             };
             const targetPath = redirectMap[authUser.role] || '/dashboard';
@@ -959,6 +961,14 @@ export const actionExecutor = {
       case 'OPEN_ACB_DASHBOARD':
         navigate('/acb-dashboard');
         return "Opening Anti-Corruption dashboard.";
+
+      case 'OPEN_FIRE_DASHBOARD':
+        navigate('/fire-dashboard');
+        return "Opening Fire Department dashboard.";
+
+      case 'OPEN_HOSPITAL_DASHBOARD':
+        navigate('/hospital-dashboard');
+        return "Opening Hospital dashboard.";
         
       case 'OPEN_ADMIN_PANEL':
         navigate('/admin');

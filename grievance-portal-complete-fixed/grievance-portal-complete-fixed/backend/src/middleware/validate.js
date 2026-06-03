@@ -81,8 +81,8 @@ const loginValidator = [
 // Complaint Validators
 const complaintValidator = [
   body('category')
-    .isIn(['crime', 'corruption', 'civic_issue'])
-    .withMessage('Category must be crime, corruption, or civic_issue'),
+    .isIn(['crime', 'corruption', 'civic_issue', 'fire', 'hospital'])
+    .withMessage('Category must be crime, corruption, civic_issue, fire, or hospital'),
   body('subcategory')
     .trim()
     .notEmpty()

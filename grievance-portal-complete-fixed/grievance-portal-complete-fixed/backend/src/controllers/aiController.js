@@ -31,6 +31,8 @@ const detectComplaintIssue = asyncHandler(async (req, res) => {
         detectedCategory: result.detectedCategory,
         confidence: result.confidence,
         reason: result.reason,
+        severity: result.severity,
+        severityReason: result.severityReason,
         mappedCategory: result.mappedCategory,
         mappedSubcategory: result.mappedSubcategory
       }

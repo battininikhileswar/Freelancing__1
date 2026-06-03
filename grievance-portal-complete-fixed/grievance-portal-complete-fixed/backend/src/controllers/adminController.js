@@ -29,7 +29,7 @@ const createAuthority = asyncHandler(async (req, res) => {
   const { name, email, password, phone, role, authorityType, jurisdiction, authorityId, badgeNumber, department } = req.body;
   const db = getDb();
 
-  const validRoles = [ROLES.PS_OFFICER, ROLES.ACB_OFFICER, ROLES.MUNICIPAL_OFFICER];
+  const validRoles = [ROLES.PS_OFFICER, ROLES.ACB_OFFICER, ROLES.MUNICIPAL_OFFICER, ROLES.FIRE_OFFICER, ROLES.HOSPITAL_OFFICER];
   if (!validRoles.includes(role)) throw new AppError('Invalid authority role.', 400);
 
   const existingQuery = await db.collection(COLLECTIONS.USERS).where('email', '==', email.toLowerCase()).limit(1).get();

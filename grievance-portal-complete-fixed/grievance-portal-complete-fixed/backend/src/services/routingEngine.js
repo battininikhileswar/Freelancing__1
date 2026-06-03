@@ -11,6 +11,8 @@ const AUTHORITY_TYPE_MAP = {
   crime: 'ps',
   corruption: 'acb',
   civic_issue: 'municipal',
+  fire: 'fire',
+  hospital: 'hospital',
 };
 
 // Subcategory overrides
@@ -41,8 +43,20 @@ const SUBCATEGORY_OVERRIDES = {
   electricity: 'municipal',
   noise_pollution: 'municipal',
 
+  // Fire subcategories
+  fire_outbreak: 'fire',
+  safety_hazard: 'fire',
+  gas_leak: 'fire',
+  other_fire: 'fire',
+
+  // Hospital subcategories
+  ambulance_delay: 'hospital',
+  medical_negligence: 'hospital',
+  hospital_infra: 'hospital',
+  other_hospital: 'hospital',
+
   // Emergency subcategories
-  emergency_fire: 'municipal',
+  emergency_fire: 'fire',
   emergency_flood: 'municipal',
   emergency_accident: 'ps',
   emergency_electrical: 'municipal',

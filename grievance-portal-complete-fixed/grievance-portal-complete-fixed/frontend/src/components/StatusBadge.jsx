@@ -40,9 +40,11 @@ export function CategoryBadge({ category }) {
     crime:       'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
     corruption:  'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
     civic_issue: 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400',
+    fire:        'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
+    hospital:    'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
   };
-  const icons = { crime: '🚨', corruption: '⚖️', civic_issue: '🏙️' };
-  const labels = { crime: 'Crime', corruption: 'Corruption', civic_issue: 'Civic Issue' };
+  const icons = { crime: '🚨', corruption: '⚖️', civic_issue: '🏙️', fire: '🔥', hospital: '🏥' };
+  const labels = { crime: 'Crime', corruption: 'Corruption', civic_issue: 'Civic Issue', fire: 'Fire Safety', hospital: 'Healthcare' };
 
   return (
     <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${styles[category] || 'bg-slate-100 text-slate-600'}`}>

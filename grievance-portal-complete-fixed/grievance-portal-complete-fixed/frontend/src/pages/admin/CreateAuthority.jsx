@@ -12,6 +12,8 @@ const AUTHORITY_TYPES = [
   { value: 'ps', role: 'ps_officer', label: 'Police Station (PS)', icon: '🚔', desc: 'Handles crime complaints in assigned jurisdiction' },
   { value: 'acb', role: 'acb_officer', label: 'Anti-Corruption Bureau (ACB)', icon: '⚖️', desc: 'Handles corruption and bribery complaints' },
   { value: 'municipal', role: 'municipal_officer', label: 'Municipal Authority', icon: '🏛️', desc: 'Handles civic issues and public works complaints' },
+  { value: 'fire', role: 'fire_officer', label: 'Fire Department', icon: '🔥', desc: 'Handles fire emergencies, safety codes and violations' },
+  { value: 'hospital', role: 'hospital_officer', label: 'Healthcare & Hospital Authority', icon: '🏥', desc: 'Handles medical care, public hospitals and healthcare issues' },
 ];
 
 const DISTRICTS_MAP = {

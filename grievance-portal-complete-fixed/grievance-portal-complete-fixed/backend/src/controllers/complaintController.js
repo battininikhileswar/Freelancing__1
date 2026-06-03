@@ -257,7 +257,7 @@ const getComplaintDetail = asyncHandler(async (req, res) => {
   if (req.user.role === 'citizen' && data.userId !== req.user.id) {
     throw new AppError('Access denied.', 403);
   }
-  if (['ps_officer', 'acb_officer', 'municipal_officer'].includes(req.user.role)) {
+  if (['ps_officer', 'acb_officer', 'municipal_officer', 'fire_officer', 'hospital_officer'].includes(req.user.role)) {
     if (data.routing?.authorityId !== req.user.authorityId) {
       throw new AppError('This complaint is not assigned to your authority.', 403);
     }
@@ -319,7 +319,7 @@ const updateComplaintStatus = asyncHandler(async (req, res) => {
   const data = doc.data();
 
   // Authority can only update assigned complaints
-  if (['ps_officer', 'acb_officer', 'municipal_officer'].includes(req.user.role)) {
+  if (['ps_officer', 'acb_officer', 'municipal_officer', 'fire_officer', 'hospital_officer'].includes(req.user.role)) {
     if (data.routing?.authorityId !== req.user.authorityId) {
       throw new AppError('Not authorized to update this complaint.', 403);
     }
