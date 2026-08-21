@@ -33,6 +33,22 @@ def submit_complaint_view(request):
     preferred_language = data_source.get('preferredLanguage', 'en')
     is_anonymous_val = data_source.get('isAnonymous')
     
+    ai_vision_result_raw = data_source.get('aiVisionResult')
+    ai_metadata = {}
+    if ai_vision_result_raw:
+        try:
+            ai_metadata = json.loads(ai_vision_result_raw) if isinstance(ai_vision_result_raw, str) else ai_vision_result_raw
+        except ValueError:
+            pass
+
+    duplicate_metadata_raw = data_source.get('duplicateMetadata')
+    duplicate_metadata = {}
+    if duplicate_metadata_raw:
+        try:
+            duplicate_metadata = json.loads(duplicate_metadata_raw) if isinstance(duplicate_metadata_raw, str) else duplicate_metadata_raw
+        except ValueError:
+            pass
+            
     # Parse isAnonymous
     is_anonymous = is_anonymous_val == True or is_anonymous_val == 'true'
 
@@ -111,9 +127,52 @@ def submit_complaint_view(request):
             preferred_language=preferred_language,
             escalation_level=0,
             escalation_due=escalation_due_date,
-            is_escalated=False
+            is_escalated=False,
+            metadata={
+                'aiMetadata': ai_metadata,
+                'duplicateMetadata': duplicate_metadata
+            }
         )
         complaint.save()
+
+        # Save to Firestore as SOURCE OF TRUTH
+        try:
+            from api.services.firebase import get_firestore_db
+            db = get_firestore_db()
+            if db:
+                fs_doc = {
+                    'id': complaint.id,
+                    'complaintId': complaint.complaint_id,
+                    'category': complaint.category,
+                    'subcategory': complaint.subcategory,
+                    'description': complaint.description,
+                    'location': complaint.location,
+                    'isAnonymous': complaint.is_anonymous,
+                    'userId': complaint.user_id,
+                    'userName': complaint.user_name,
+                    'userEmail': complaint.user_email,
+                    'userPhone': complaint.user_phone,
+                    'attachments': complaint.attachments,
+                    'status': complaint.status,
+                    'routing': complaint.routing,
+                    'statusHistory': complaint.status_history,
+                    'remarks': complaint.remarks,
+                    'proofUploads': complaint.proof_uploads,
+                    'preferredLanguage': complaint.preferred_language,
+                    'escalationLevel': complaint.escalation_level,
+                    'escalationDue': complaint.escalation_due.isoformat() if complaint.escalation_due else None,
+                    'isEscalated': complaint.is_escalated,
+                    'createdAt': complaint.created_at.isoformat() if complaint.created_at else datetime.now().isoformat(),
+                    'updatedAt': complaint.updated_at.isoformat() if complaint.updated_at else datetime.now().isoformat(),
+                    'closedAt': complaint.closed_at.isoformat() if complaint.closed_at else None,
+                    'aiMetadata': ai_metadata,
+                    'duplicateMetadata': duplicate_metadata
+                }
+                db.collection('complaints').document(complaint.complaint_id).set(fs_doc)
+                print(f"[ComplaintsView] Saved complaint {complaint.complaint_id} to Firestore")
+        except Exception as fs_err:
+            print(f"[ComplaintsView] Failed to save to Firestore: {fs_err}")
+
 
         # Update user's complaints count
         if not is_anonymous and request.user:
@@ -603,3 +662,30 @@ def ip_geolocation_view(request):
     except Exception as e:
         print(" [IP-GeoProxy] Fatal error:", str(e))
         return JsonResponse({'success': False, 'message': f"Proxy geolocation error: {str(e)}"}, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def check_duplicate_view(request):
+    import json
+    from api.services.duplicate_detection import detect_duplicate_complaint
+    try:
+        data = json.loads(request.body)
+        result = detect_duplicate_complaint(data)
+        return JsonResponse({
+            'success': True,
+            'message': 'Duplicate check completed.',
+            'data': result
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({
+            'success': False,
+            'message': f"Failed to check duplicate: {str(e)}",
+            'data': {
+                'status': 'unknown',
+                'isDuplicate': False,
+                'confidence': 0,
+                'reason': 'Duplicate detection temporarily unavailable.'
+            }
+        }, status=500)

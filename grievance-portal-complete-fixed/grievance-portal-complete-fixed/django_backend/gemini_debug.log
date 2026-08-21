@@ -1,0 +1,51 @@
+SUCCESS: {
+  "detectedIssue": "Pothole",
+  "category": "civic_issue",
+  "subcategory": "road_damage",
+  "confidence": 0.98,
+  "severity": "high",
+  "isRelevant": true,
+  "analysis": "The image shows a deep pothole filled with water on a damaged asphalt road surface, posing a hazard to passing vehicles."
+}
+SUCCESS: {
+  "detectedIssue": "Pothole",
+  "category": "civic_issue",
+  "subcategory": "road_damage",
+  "confidence": 0.98,
+  "severity": "high",
+  "isRelevant": true,
+  "analysis": "The image shows a prominent water-filled pothole in the middle of a paved road with scattered gravel, posing a hazard to drivers and cyclists."
+}
+SUCCESS: {
+  "detectedIssue": "Garbage Dump",
+  "category": "civic_issue",
+  "subcategory": "garbage",
+  "confidence": 0.95,
+  "severity": "high",
+  "isRelevant": true,
+  "analysis": "The image shows a large stretch of uncollected waste and plastic garbage dumped illegally on the roadside next to a busy public street with passing traffic."
+}
+ERROR: [VisionService] [TIER 1] Gemini failed with status 400: {
+  "error": {
+    "code": 400,
+    "message": "Unable to process input image. Please retry or report in https://developers.generativeai.google/guide/troubleshooting",
+    "status": "INVALID_ARGUMENT"
+  }
+}
+
+ERROR: [VisionService] [TIER 1] Gemini failed with status 400: {
+  "error": {
+    "code": 400,
+    "message": "Unable to process input image. Please retry or report in https://developers.generativeai.google/guide/troubleshooting",
+    "status": "INVALID_ARGUMENT"
+  }
+}
+
+ERROR: [VisionService] [TIER 1] Gemini failed with status 400: {
+  "error": {
+    "code": 400,
+    "message": "Unable to process input image. Please retry or report in https://developers.generativeai.google/guide/troubleshooting",
+    "status": "INVALID_ARGUMENT"
+  }
+}
+

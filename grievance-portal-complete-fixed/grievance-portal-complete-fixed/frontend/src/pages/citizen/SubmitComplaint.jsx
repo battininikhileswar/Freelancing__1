@@ -369,7 +369,7 @@ export default function SubmitComplaint() {
     return true;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (duplicateMetadata = null) => {
     setSubmitting(true);
 
     // 1. Offline Mode Check
@@ -416,6 +416,10 @@ export default function SubmitComplaint() {
       formData.append('isAnonymous', form.isAnonymous);
       formData.append('location', JSON.stringify(form.location));
       files.forEach(f => formData.append('attachments', f));
+
+      if (duplicateMetadata) {
+        formData.append('duplicateMetadata', JSON.stringify(duplicateMetadata));
+      }
 
       if (aiResult) {
         // Send the complete structured AI result
@@ -481,29 +485,31 @@ export default function SubmitComplaint() {
   };
 
   const preSubmitCheck = async () => {
-    if (form.location.lat === null || form.location.lng === null) {
-      await handleSubmit();
-      return;
-    }
-
     setDuplicateLoading(true);
     try {
       const res = await api.post('/complaints/check-duplicate', {
         category: form.category,
+        subcategory: form.subcategory,
         location: form.location,
-        description: form.description
+        description: form.description,
+        summary: aiResult?.analysis || ''
       });
       
-      const { isPotentialDuplicate, matches } = res.data.data;
-      if (isPotentialDuplicate) {
-        setDuplicateData(matches);
+      const duplicateResult = res.data.data;
+      if (duplicateResult.status === 'duplicate' || duplicateResult.status === 'possible_duplicate') {
+        setDuplicateData(duplicateResult);
         setShowDuplicateModal(true);
       } else {
-        await handleSubmit();
+        await handleSubmit(duplicateResult);
       }
     } catch (err) {
       console.warn('⚠️ Duplicate check failed, bypassing:', err.message);
-      await handleSubmit();
+      await handleSubmit({
+        status: 'unknown',
+        isDuplicate: false,
+        confidence: 0,
+        reason: 'Duplicate detection temporarily unavailable.'
+      });
     } finally {
       setDuplicateLoading(false);
     }
@@ -971,7 +977,7 @@ export default function SubmitComplaint() {
               Previous
             </button>
             {step === STEPS.length - 2 ? (
-              <button onClick={preSubmitCheck} disabled={submitting || duplicateLoading || !canNext()} className="btn-primary">
+                  <button onClick={preSubmitCheck} disabled={submitting || duplicateLoading || !canNext()} className="btn-primary">
                 {submitting ? 'Finalizing AI analysis...' : duplicateLoading ? 'Checking...' : 'Confirm & Submit'}
               </button>
             ) : (
@@ -1001,42 +1007,37 @@ export default function SubmitComplaint() {
                 </div>
                 <div>
                   <h3 className="font-extrabold text-sm text-slate-800 dark:text-slate-100 uppercase tracking-wide">
-                    Potential Duplicate Found Nearby
+                    {duplicateData.status === 'duplicate' ? 'Possible Duplicate Complaint' : 'Similar Complaint Found'}
                   </h3>
                   <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">
-                    A similar issue in this category has already been reported nearby
+                    {duplicateData.reason}
                   </p>
                 </div>
               </div>
 
-              <div className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed text-left">
-                We detected <strong>{duplicateData.length}</strong> matching report(s) within 300 meters of your coordinates. Please review them below:
-              </div>
-
-              {/* Duplicate list container */}
+              {/* Duplicate info container */}
               <div className="flex flex-col gap-3 max-h-[220px] overflow-y-auto pr-1">
-                {duplicateData.map(match => (
                   <div 
-                    key={match.complaintId} 
                     className="p-3.5 rounded-2xl bg-slate-50/70 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-800/40 flex flex-col gap-1.5 text-left"
                   >
                     <div className="flex items-center justify-between text-[10px] font-extrabold">
                       <span className="font-mono text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-lg">
-                        {match.complaintId}
+                        {duplicateData.matchedComplaintId}
                       </span>
                       <span className="text-slate-400">
-                        📍 {match.distance}m away • {match.similarityScore}% text match
+                        {duplicateData.distanceMeters !== null ? `📍 ${duplicateData.distanceMeters}m away` : '📍 Location Unknown'} • {Math.round((duplicateData.confidence || 0) * 100)}% Match
                       </span>
                     </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-300 italic line-clamp-2">
-                      "{match.description}"
-                    </p>
-                    <div className="flex flex-col gap-0.5 text-[9px] font-bold text-slate-400 mt-1">
-                      <span>Address: {match.address}</span>
-                      <span className="text-slate-500 uppercase mt-0.5">Status: {match.status}</span>
+                    <div className="text-sm font-bold text-slate-800 dark:text-slate-200 capitalize">
+                      {duplicateData.matchedComplaint?.category?.replace(/_/g, ' ')} / {duplicateData.matchedComplaint?.subcategory?.replace(/_/g, ' ')}
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                      {duplicateData.matchedComplaint?.address}
+                    </div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase mt-1">
+                      Status: {duplicateData.matchedComplaint?.status}
                     </div>
                   </div>
-                ))}
               </div>
 
               <div className="text-[10px] text-slate-400 dark:text-slate-500 font-bold leading-normal text-center mt-1">
