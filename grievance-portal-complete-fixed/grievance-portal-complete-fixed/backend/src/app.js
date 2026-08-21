@@ -9,8 +9,12 @@ const { initFirebase } = require('./config/firebase');
 const routes = require('./routes/index');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
 
-// Initialize Firebase
-initFirebase();
+// Initialize Firebase (guarded)
+try {
+  initFirebase();
+} catch (err) {
+  console.warn('⚠️ Firebase initialization failed — continuing with mock DB for local dev:', err.message);
+}
 
 const app = express();
 

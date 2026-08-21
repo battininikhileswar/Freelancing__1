@@ -87,12 +87,22 @@ export default function SubmitComplaint() {
       const { data } = res.data;
       setAiResult(data);
 
-      // Pre-select category and subcategory automatically
-      setForm(f => ({
-        ...f,
-        category: data.mappedCategory,
-        subcategory: data.mappedSubcategory
-      }));
+      if (data.is_complaint && data.category !== 'uncertain') {
+        // Pre-select category and subcategory automatically
+        setForm(f => ({
+          ...f,
+          category: data.mappedCategory,
+          subcategory: data.mappedSubcategory
+        }));
+        toast.success(`AI detected: ${data.category || data.detectedCategory} (${Math.round(data.confidence * 100)}% Confidence)`);
+      } else {
+        setForm(f => ({ ...f, category: '', subcategory: '' }));
+        if (data.category === 'uncertain') {
+          toast.error('Image is unclear. Please try another one.');
+        } else {
+          toast.error('Image is not suitable for a complaint.');
+        }
+      }
 
       // Proactively add file to files array so it is attached as evidence
       const withPreview = Object.assign(file, { preview: URL.createObjectURL(file) });
@@ -101,8 +111,6 @@ export default function SubmitComplaint() {
         if (prev.length >= 5) return prev;
         return [...prev, withPreview];
       });
-
-      toast.success(`AI detected: ${data.detectedCategory} (${Math.round(data.confidence * 100)}% Confidence)`);
     } catch (err) {
       console.error('AI upload error:', err);
       toast.error(err.response?.data?.message || 'AI Photo detection failed. Please select manually.');
@@ -339,7 +347,10 @@ export default function SubmitComplaint() {
   };
 
   const canNext = () => {
-    if (step === 0) return form.category && form.subcategory;
+    if (step === 0) {
+      if (aiResult && (aiResult.is_complaint === false || aiResult.category === 'uncertain')) return false;
+      return form.category && form.subcategory;
+    }
     if (step === 1) return form.description.length >= 20;
     if (step === 2) return form.location.address && form.location.state;
     return true;
@@ -546,81 +557,107 @@ export default function SubmitComplaint() {
                         <motion.div
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="bg-white/80 dark:bg-slate-900/60 p-4 border border-white/60 dark:border-white/5 space-y-2 text-xs"
+                          className={`bg-white/80 dark:bg-slate-900/60 p-4 border space-y-2 text-xs ${aiResult.is_complaint === false ? (aiResult.category === 'uncertain' ? 'border-amber-400 dark:border-amber-500/50' : 'border-red-400 dark:border-red-500/50') : 'border-white/60 dark:border-white/5'}`}
                           style={{ boxShadow: 'var(--clay-shadow-sm)', borderRadius: '18px' }}
                         >
-                          <div className="flex justify-between items-center">
-                            <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Detected Issue:</span>
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200/50">
-                              {aiResult.detectedCategory}
-                            </span>
-                          </div>
-
-                          <div className="flex justify-between items-center">
-                            <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Confidence Score:</span>
-                            <span className="font-black text-slate-800 dark:text-slate-100">
-                              {Math.round(aiResult.confidence * 100)}% Match
-                            </span>
-                          </div>
-
-                          <div className="flex justify-between items-center">
-                            <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">AI Severity:</span>
-                            <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-200/50 animate-pulse">
-                              {aiResult.severity}
-                            </span>
-                          </div>
-
-                          <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2 space-y-1">
-                            <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">AI Analysis:</span>
-                            <p className="text-slate-600 dark:text-slate-300 font-semibold leading-relaxed">
-                              {aiResult.reason}
-                            </p>
-                          </div>
-
-                          {aiResult.severityReason && (
-                            <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2 space-y-1">
-                              <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Severity Reason:</span>
+                          {aiResult.is_complaint === false ? (
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2">
+                                <AlertCircle size={20} className={aiResult.category === 'uncertain' ? 'text-amber-500' : 'text-red-500'} />
+                                <span className={`font-black text-sm uppercase tracking-wider ${aiResult.category === 'uncertain' ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
+                                  {aiResult.category === 'uncertain' ? '⚠️ IMAGE UNCLEAR' : '⚠️ IMAGE NOT SUITABLE FOR COMPLAINT'}
+                                </span>
+                              </div>
                               <p className="text-slate-600 dark:text-slate-300 font-semibold leading-relaxed">
-                                {aiResult.severityReason}
+                                {aiResult.category === 'uncertain' 
+                                  ? 'Please upload a clearer image showing the actual issue.' 
+                                  : `Reason: ${aiResult.reason || 'This appears to be a non-complaint image (e.g., passport photo, food, random scenery) and does not show a civic issue.'}`}
                               </p>
+                              <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2">
+                                <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">AI Analysis:</span>
+                                <p className="text-slate-600 dark:text-slate-300 italic">{aiResult.analysis}</p>
+                              </div>
                             </div>
-                          )}
+                          ) : (
+                            <>
+                              <div className="flex justify-between items-center">
+                                <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Detected Issue:</span>
+                                <span className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${aiResult.category === 'corruption_bribery' ? 'bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200/50' : 'bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200/50'}`}>
+                                  {aiResult.category === 'corruption_bribery' ? 'CORRUPTION / BRIBERY' : (aiResult.category || aiResult.detectedCategory)}
+                                </span>
+                              </div>
 
-                          <div className="pt-1.5 flex gap-2">
-                            <span className="text-[10px] font-bold text-green-600 dark:text-green-400 flex items-center gap-1">
-                              <CheckCircle size={11} /> Auto-Mapped: {aiResult.mappedCategory} &gt; {aiResult.mappedSubcategory.replace(/_/g, ' ')}
-                            </span>
-                          </div>
+                              <div className="flex justify-between items-center">
+                                <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Confidence Score:</span>
+                                <span className="font-black text-slate-800 dark:text-slate-100">
+                                  {Math.round(aiResult.confidence * 100)}% Match
+                                </span>
+                              </div>
+
+                              <div className="flex justify-between items-center">
+                                <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">AI Severity:</span>
+                                <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-200/50 animate-pulse">
+                                  {aiResult.severity}
+                                </span>
+                              </div>
+
+                              <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2 space-y-1">
+                                <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">AI Analysis:</span>
+                                <p className="text-slate-600 dark:text-slate-300 font-semibold leading-relaxed">
+                                  {aiResult.reason || aiResult.analysis}
+                                </p>
+                              </div>
+
+                              {aiResult.severityReason && (
+                                <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2 space-y-1">
+                                  <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Severity Reason:</span>
+                                  <p className="text-slate-600 dark:text-slate-300 font-semibold leading-relaxed">
+                                    {aiResult.severityReason}
+                                  </p>
+                                </div>
+                              )}
+
+                              <div className="pt-1.5 flex gap-2">
+                                <span className="text-[10px] font-bold text-green-600 dark:text-green-400 flex items-center gap-1">
+                                  <CheckCircle size={11} /> Auto-Mapped: {aiResult.mappedCategory} &gt; {aiResult.mappedSubcategory?.replace(/_/g, ' ')}
+                                </span>
+                              </div>
+                            </>
+                          )}
                         </motion.div>
                       )}
                     </div>
                   </div>
                 </div>
 
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Select Category</h2>
-                <div className="grid gap-3">
-                  {Object.entries(CATEGORIES).map(([key, cat]) => (
-                    <button key={key} onClick={() => { set('category', key); set('subcategory', ''); }}
-                      className={`p-4 rounded-xl border-2 text-left transition-all duration-150 ${form.category === key
-                        ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/50'
-                        : 'border-slate-200 dark:border-slate-700 hover:border-brand-300 dark:hover:border-brand-700 bg-white dark:bg-slate-800'}`}>
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{cat.icon}</span>
-                        <div>
-                          <div className="font-semibold text-slate-900 dark:text-white">{cat.label}</div>
-                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                            {key === 'crime' && 'Routed to Police Station (PS)'}
-                            {key === 'corruption' && 'Routed to Anti-Corruption Bureau (ACB)'}
-                            {key === 'civic_issue' && 'Routed to Municipal Authority'}
-                            {key === 'fire' && 'Routed to Fire Department'}
-                            {key === 'hospital' && 'Routed to Healthcare & Hospital Authority'}
+                {(!aiResult || aiResult.is_complaint !== false) && (
+                  <>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">Select Category</h2>
+                    <div className="grid gap-3">
+                      {Object.entries(CATEGORIES).map(([key, cat]) => (
+                        <button key={key} onClick={() => { set('category', key); set('subcategory', ''); }}
+                          className={`p-4 rounded-xl border-2 text-left transition-all duration-150 ${form.category === key
+                            ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/50'
+                            : 'border-slate-200 dark:border-slate-700 hover:border-brand-300 dark:hover:border-brand-700 bg-white dark:bg-slate-800'}`}>
+                          <div className="flex items-center gap-3">
+                            <span className="text-2xl">{cat.icon}</span>
+                            <div>
+                              <div className="font-semibold text-slate-900 dark:text-white">{cat.label}</div>
+                              <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                {key === 'crime' && 'Routed to Police Station (PS)'}
+                                {key === 'corruption' && 'Routed to Anti-Corruption Bureau (ACB)'}
+                                {key === 'civic_issue' && 'Routed to Municipal Authority'}
+                                {key === 'fire' && 'Routed to Fire Department'}
+                                {key === 'hospital' && 'Routed to Healthcare & Hospital Authority'}
+                              </div>
+                            </div>
+                            {form.category === key && <CheckCircle size={18} className="ml-auto text-brand-500 flex-shrink-0" />}
                           </div>
-                        </div>
-                        {form.category === key && <CheckCircle size={18} className="ml-auto text-brand-500 flex-shrink-0" />}
-                      </div>
-                    </button>
-                  ))}
-                </div>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
 
                 {selectedCategory && (
                   <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>

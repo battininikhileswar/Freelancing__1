@@ -212,17 +212,21 @@ def clear_conversation_history(user_id='anonymous'):
 
 def map_category(detected):
     clean_detected = str(detected or '').lower().strip()
-    if clean_detected in ['pothole', 'road crack']:
+    # Normalize corruption/bribery variations
+    if 'corruption' in clean_detected or 'briber' in clean_detected:
+        clean_detected = 'corruption_bribery'
+
+    if clean_detected in ['pothole', 'road_damage', 'road crack']:
         return {'category': 'civic_issue', 'subcategory': 'road_damage'}
-    elif clean_detected == 'garbage':
+    elif clean_detected in ['garbage', 'garbage_waste', 'illegal_dumping']:
         return {'category': 'civic_issue', 'subcategory': 'garbage'}
-    elif clean_detected == 'water leakage':
+    elif clean_detected in ['water leakage', 'water_supply']:
         return {'category': 'civic_issue', 'subcategory': 'water_supply'}
-    elif clean_detected == 'broken streetlight':
+    elif clean_detected in ['broken streetlight', 'streetlight']:
         return {'category': 'civic_issue', 'subcategory': 'street_light'}
-    elif clean_detected in ['open manhole', 'flooding']:
+    elif clean_detected in ['drainage', 'drainage_sewage', 'open manhole', 'flooding']:
         return {'category': 'civic_issue', 'subcategory': 'sewage'}
-    elif clean_detected == 'fallen tree':
+    elif clean_detected in ['fallen tree', 'tree_environment']:
         return {'category': 'civic_issue', 'subcategory': 'other_civic'}
     elif clean_detected in ['active fire', 'fire', 'smoke']:
         return {'category': 'fire', 'subcategory': 'fire_outbreak'}
@@ -234,6 +238,10 @@ def map_category(detected):
         return {'category': 'hospital', 'subcategory': 'ambulance_delay'}
     elif clean_detected in ['hospital infrastructure', 'medical waste']:
         return {'category': 'hospital', 'subcategory': 'hospital_infra'}
+    elif clean_detected == 'corruption_bribery':
+        return {'category': 'corruption', 'subcategory': 'bribery'}
+    elif clean_detected in ['not_a_complaint', 'uncertain']:
+        return {'category': clean_detected, 'subcategory': clean_detected}
     else:
         return {'category': 'civic_issue', 'subcategory': 'other_civic'}
 
@@ -250,34 +258,85 @@ def detect_issue_from_image(file_bytes, mime_type='image/jpeg', original_name=''
     print(f"🖼️ [VisionService] Converting image of type {mime_type} to Base64 ({len(base64_image)} chars)")
 
     prompt_text = (
-        "Analyze this image and identify if it displays any of the following issues:\n"
-        "- Pothole\n"
-        "- Garbage\n"
-        "- Water leakage\n"
-        "- Broken streetlight\n"
-        "- Fallen tree\n"
-        "- Road crack\n"
-        "- Open manhole\n"
-        "- Flooding\n"
-        "- Active fire (or smoke/flame)\n"
-        "- Fire hazard (blocked fire exit, unsafe wiring, etc.)\n"
-        "- Gas leak\n"
-        "- Ambulance block\n"
-        "- Hospital infrastructure failure (medical equipment issue, hospital cleanliness, medical waste dumping, etc.)\n\n"
-        "Also, assess the severity of the issue based on the photo:\n"
-        "- Low: Cosmetic issues, minor littering, routine maintenance, small potholes with no safety risk.\n"
-        "- Medium: Standard civic/medical issues, minor street flooding, filled waste bins.\n"
-        "- High: Uncovered open manholes, complete street blackouts, severe street flooding, hazardous fire exits, medical waste dumping.\n"
-        "- Emergency: Active fire outbreaks, life-threatening gas leaks, severe active accidents, active building collapse.\n\n"
-        "You MUST return a JSON object with:\n"
+        "Analyze this image to determine if it is suitable for filing a public/civic complaint.\n\n"
+        "IMPORTANT RULES:\n"
+        "1. A passport-size/person portrait, selfie, food, product photo, normal building, scenery, or random screenshot without civic issue evidence is NOT a complaint. For these, return is_complaint: false and category: \"not_a_complaint\".\n"
+        "2. If the image clearly shows corruption or bribery (e.g., money exchange in an official context), classify it as \"corruption_bribery\". Do NOT infer corruption just because a person is in the image.\n"
+        "3. If the image is extremely blurry, ambiguous, or unclear, return category: \"uncertain\".\n"
+        "4. If it IS a valid complaint, assign the most appropriate category (e.g., pothole, garbage_waste, streetlight, water_supply, drainage, road_damage, illegal_dumping, corruption_bribery, tree_environment, traffic_signal, public_property_damage, fire, hospital_issue, or other_civic_issue).\n\n"
+        "You MUST return ONLY a strictly valid JSON object with EXACTLY this structure:\n"
         "{\n"
-        "  \"detectedCategory\": \"exactly one of the categories listed above, or Other\",\n"
-        "  \"confidence\": a decimal score between 0.0 and 1.0 representing your confidence level,\n"
-        "  \"reason\": \"a brief 1-2 sentence explanation of the detected issue\",\n"
-        "  \"severity\": \"exactly one of: Low, Medium, High, Emergency\",\n"
-        "  \"severityReason\": \"a brief 1-sentence reasoning for the severity score\"\n"
+        "  \"is_complaint\": true/false,\n"
+        "  \"category\": \"one of the categories listed above, not_a_complaint, or uncertain\",\n"
+        "  \"confidence\": a number between 0.0 and 100.0,\n"
+        "  \"severity\": \"low\", \"medium\", \"high\", \"critical\", or \"none\",\n"
+        "  \"analysis\": \"A brief explanation of what the image shows.\",\n"
+        "  \"reason\": \"Why it was classified this way.\"\n"
         "}"
     )
+
+    def parse_and_format_response(reply_text, engine):
+        try:
+            parsed = json.loads(reply_text)
+            is_complaint = parsed.get('is_complaint', False)
+            if not isinstance(is_complaint, bool):
+                is_complaint = False
+                
+            category = str(parsed.get('category', 'uncertain')).lower().strip()
+            
+            # Normalize corruption variants
+            if 'corruption' in category or 'briber' in category:
+                category = 'corruption_bribery'
+
+            if category == 'uncertain':
+                return {
+                    'success': True,
+                    'is_complaint': False,
+                    'category': 'uncertain',
+                    'confidence': parsed.get('confidence', 0),
+                    'severity': 'unknown',
+                    'analysis': parsed.get('analysis', 'The image does not provide enough visual evidence.'),
+                    'reason': parsed.get('reason', 'Please upload a clearer image showing the issue.'),
+                    'engine': engine
+                }
+
+            if not is_complaint or category == 'not_a_complaint':
+                return {
+                    'success': True,
+                    'is_complaint': False,
+                    'category': 'not_a_complaint',
+                    'confidence': parsed.get('confidence', 100),
+                    'severity': 'none',
+                    'analysis': parsed.get('analysis', 'The image is not a valid civic complaint.'),
+                    'reason': parsed.get('reason', 'This image does not show a civic/public issue that can be reported.'),
+                    'engine': engine
+                }
+
+            mappings = map_category(category)
+            return {
+                'success': True,
+                'is_complaint': True,
+                'category': category,
+                'confidence': parsed.get('confidence', 90),
+                'severity': parsed.get('severity', 'medium'),
+                'analysis': parsed.get('analysis', 'Issue detected.'),
+                'reason': parsed.get('reason', 'Visual evidence found.'),
+                'mappedCategory': mappings['category'],
+                'mappedSubcategory': mappings['subcategory'],
+                'engine': engine
+            }
+        except Exception as e:
+            print(f"⚠️ [VisionService] JSON parse error from {engine}: {str(e)}")
+            return {
+                'success': True,
+                'is_complaint': False,
+                'category': 'uncertain',
+                'confidence': 0,
+                'severity': 'unknown',
+                'analysis': 'Failed to process image structure.',
+                'reason': 'Please upload a clearer image.',
+                'engine': engine
+            }
 
     # ================= TIER 1: OPENAI VISION =================
     if open_ai_key:
@@ -288,7 +347,7 @@ def detect_issue_from_image(file_bytes, mime_type='image/jpeg', original_name=''
                 'messages': [
                     {
                         'role': 'system',
-                        'content': 'You are an expert Smart City issue classifier. Analyze visual input and identify civic hazards or failures. Always respond with a strictly formatted JSON object.'
+                        'content': 'You are an expert Smart City issue classifier. Always respond with strictly formatted JSON.'
                     },
                     {
                         'role': 'user',
@@ -305,7 +364,7 @@ def detect_issue_from_image(file_bytes, mime_type='image/jpeg', original_name=''
                 ],
                 'response_format': { 'type': 'json_object' },
                 'max_tokens': 300,
-                'temperature': 0.2
+                'temperature': 0.1
             }
             
             headers = {
@@ -324,21 +383,7 @@ def detect_issue_from_image(file_bytes, mime_type='image/jpeg', original_name=''
                 res_json = response.json()
                 reply_text = res_json['choices'][0]['message']['content'].strip()
                 print(f"✅ [VisionService] [TIER 1] OpenAI response: {reply_text}")
-                
-                parsed = json.loads(reply_text)
-                mappings = map_category(parsed.get('detectedCategory'))
-                
-                return {
-                    'success': True,
-                    'detectedCategory': parsed.get('detectedCategory', 'Other'),
-                    'confidence': parsed.get('confidence', 0.9) if parsed.get('confidence') is not None else 0.9,
-                    'reason': parsed.get('reason', 'No specific description provided.'),
-                    'severity': parsed.get('severity', 'Medium'),
-                    'severityReason': parsed.get('severityReason', 'Classified by AI.'),
-                    'mappedCategory': mappings['category'],
-                    'mappedSubcategory': mappings['subcategory'],
-                    'engine': 'openai'
-                }
+                return parse_and_format_response(reply_text, 'openai')
             else:
                 print(f"⚠️ [VisionService] [TIER 1] OpenAI failed with status {response.status_code}: {response.text}")
         except Exception as e:
@@ -353,7 +398,7 @@ def detect_issue_from_image(file_bytes, mime_type='image/jpeg', original_name=''
                 'messages': [
                     {
                         'role': 'system',
-                        'content': 'You are an expert Smart City issue classifier. Analyze visual input and identify civic hazards or failures. Always respond with a strictly formatted JSON object.'
+                        'content': 'You are an expert Smart City issue classifier. Always respond with strictly formatted JSON.'
                     },
                     {
                         'role': 'user',
@@ -370,7 +415,7 @@ def detect_issue_from_image(file_bytes, mime_type='image/jpeg', original_name=''
                 ],
                 'response_format': { 'type': 'json_object' },
                 'max_tokens': 300,
-                'temperature': 0.2
+                'temperature': 0.1
             }
             
             headers = {
@@ -389,21 +434,7 @@ def detect_issue_from_image(file_bytes, mime_type='image/jpeg', original_name=''
                 res_json = response.json()
                 reply_text = res_json['choices'][0]['message']['content'].strip()
                 print(f"✅ [VisionService] [TIER 2] Groq response: {reply_text}")
-                
-                parsed = json.loads(reply_text)
-                mappings = map_category(parsed.get('detectedCategory'))
-                
-                return {
-                    'success': True,
-                    'detectedCategory': parsed.get('detectedCategory', 'Other'),
-                    'confidence': parsed.get('confidence', 0.85) if parsed.get('confidence') is not None else 0.85,
-                    'reason': parsed.get('reason', 'No specific description provided.'),
-                    'severity': parsed.get('severity', 'Medium'),
-                    'severityReason': parsed.get('severityReason', 'Classified by Groq AI.'),
-                    'mappedCategory': mappings['category'],
-                    'mappedSubcategory': mappings['subcategory'],
-                    'engine': 'groq'
-                }
+                return parse_and_format_response(reply_text, 'groq')
             else:
                 print(f"⚠️ [VisionService] [TIER 2] Groq failed with status {response.status_code}: {response.text}")
         except Exception as e:
@@ -413,29 +444,30 @@ def detect_issue_from_image(file_bytes, mime_type='image/jpeg', original_name=''
     print("💡 [VisionService] [TIER 3] Activating fail-safe Offline Local Keyword Classifier...")
     
     local_categories = [
-        { 'keyword': 'fire', 'label': 'Active fire', 'category': 'fire', 'subcategory': 'fire_outbreak', 'severity': 'Emergency', 'severityReason': 'Active fire outbreaks represent immediate hazards and are marked as critical Emergency status.', 'reason': 'Active fire outbreak or smoke plume detected via offline visual pattern matching.' },
-        { 'keyword': 'smoke', 'label': 'Active fire', 'category': 'fire', 'subcategory': 'fire_outbreak', 'severity': 'Emergency', 'severityReason': 'Smoke plumes are classified under Emergency priority.', 'reason': 'Smoke plume detected via offline visual pattern matching.' },
-        { 'keyword': 'hazard', 'label': 'Fire hazard', 'category': 'fire', 'subcategory': 'safety_hazard', 'severity': 'High', 'severityReason': 'Fire code safety violations and hazards are classified under High priority.', 'reason': 'Fire safety violation or exit blockage identified via local patterns.' },
-        { 'keyword': 'gas', 'label': 'Gas leak', 'category': 'fire', 'subcategory': 'gas_leak', 'severity': 'Emergency', 'severityReason': 'Gas leaks represent immediate chemical/explosion hazards and require Emergency priority.', 'reason': 'Hazardous gas cylinder or line leak identified via local patterns.' },
-        { 'keyword': 'ambulance', 'label': 'Ambulance block', 'category': 'hospital', 'subcategory': 'ambulance_delay', 'severity': 'High', 'severityReason': 'Ambulance path blockages are classified under High priority.', 'reason': 'Ambulance blockage or service issue identified via local patterns.' },
-        { 'keyword': 'hospital', 'label': 'Hospital infrastructure failure', 'category': 'hospital', 'subcategory': 'hospital_infra', 'severity': 'Medium', 'severityReason': 'Healthcare facilities issues are classified under Medium priority.', 'reason': 'Hospital infrastructure or cleanliness issues identified via local patterns.' },
-        { 'keyword': 'medical', 'label': 'Hospital infrastructure failure', 'category': 'hospital', 'subcategory': 'hospital_infra', 'severity': 'Medium', 'severityReason': 'Healthcare facilities issues are classified under Medium priority.', 'reason': 'Medical facilities or dumping issue identified via local patterns.' },
-        { 'keyword': 'pothole', 'label': 'Pothole', 'category': 'civic_issue', 'subcategory': 'road_damage', 'severity': 'Medium', 'severityReason': 'Road pothole damage classified under Medium priority.', 'reason': 'Pothole damage detected on the street surface via local visual pattern matching.' },
-        { 'keyword': 'crack', 'label': 'Road crack', 'category': 'civic_issue', 'subcategory': 'road_damage', 'severity': 'Medium', 'severityReason': 'Road surface crack classified under Medium priority.', 'reason': 'Asphalt cracking identified on the road surface via local visual pattern matching.' },
-        { 'keyword': 'road', 'label': 'Pothole', 'category': 'civic_issue', 'subcategory': 'road_damage', 'severity': 'Medium', 'severityReason': 'Road structural damage classified under Medium priority.', 'reason': 'Road structural damage detected via local visual pattern matching.' },
-        { 'keyword': 'garbage', 'label': 'Garbage', 'category': 'civic_issue', 'subcategory': 'garbage', 'severity': 'Medium', 'severityReason': 'Solid waste accumulation classified under Medium priority.', 'reason': 'Solid waste accumulation identified in public area via local visual pattern matching.' },
-        { 'keyword': 'waste', 'label': 'Garbage', 'category': 'civic_issue', 'subcategory': 'garbage', 'severity': 'Medium', 'severityReason': 'Solid waste piling classified under Medium priority.', 'reason': 'Trash piling identified via local visual pattern matching.' },
-        { 'keyword': 'trash', 'label': 'Garbage', 'category': 'civic_issue', 'subcategory': 'garbage', 'severity': 'Medium', 'severityReason': 'Solid waste accumulation classified under Medium priority.', 'reason': 'Solid waste accumulation identified via local visual pattern matching.' },
-        { 'keyword': 'leak', 'label': 'Water leakage', 'category': 'civic_issue', 'subcategory': 'water_supply', 'severity': 'Medium', 'severityReason': 'Pipeline water leakage classified under Medium priority.', 'reason': 'Water supply pipeline leakage identified via local visual pattern matching.' },
-        { 'keyword': 'water', 'label': 'Water leakage', 'category': 'civic_issue', 'subcategory': 'water_supply', 'severity': 'Medium', 'severityReason': 'Water line leakage classified under Medium priority.', 'reason': 'Liquid pooling or line leakage identified via local visual pattern matching.' },
-        { 'keyword': 'light', 'label': 'Broken streetlight', 'category': 'civic_issue', 'subcategory': 'street_light', 'severity': 'Low', 'severityReason': 'Cosmetic street light out of service classified under Low priority.', 'reason': 'Out of service or broken street lighting pole identified.' },
-        { 'keyword': 'tree', 'label': 'Fallen tree', 'category': 'civic_issue', 'subcategory': 'other_civic', 'severity': 'Medium', 'severityReason': 'Public pathway obstruction classified under Medium priority.', 'reason': 'Fallen tree blocking public pathway or lane identified.' },
-        { 'keyword': 'manhole', 'label': 'Open manhole', 'category': 'civic_issue', 'subcategory': 'sewage', 'severity': 'High', 'severityReason': 'Uncovered manhole represents a severe pedestrian and vehicular hazard.', 'reason': 'Hazardous uncovered or open manhole detected on street surface.' },
-        { 'keyword': 'drain', 'label': 'Open manhole', 'category': 'civic_issue', 'subcategory': 'sewage', 'severity': 'High', 'severityReason': 'Uncovered street drain represents a severe vehicular hazard.', 'reason': 'Drainage cover hazard detected on public street surface.' },
-        { 'keyword': 'flood', 'label': 'Flooding', 'category': 'civic_issue', 'subcategory': 'sewage', 'severity': 'High', 'severityReason': 'Heavy street flooding is routed as a High priority threat.', 'reason': 'Water logging or flooding detected on street surface.' }
+        { 'keyword': 'fire', 'label': 'fire', 'category': 'fire', 'subcategory': 'fire_outbreak', 'severity': 'critical' },
+        { 'keyword': 'smoke', 'label': 'fire', 'category': 'fire', 'subcategory': 'fire_outbreak', 'severity': 'critical' },
+        { 'keyword': 'hazard', 'label': 'fire_hazard', 'category': 'fire', 'subcategory': 'safety_hazard', 'severity': 'high' },
+        { 'keyword': 'gas', 'label': 'gas_leak', 'category': 'fire', 'subcategory': 'gas_leak', 'severity': 'critical' },
+        { 'keyword': 'ambulance', 'label': 'hospital_issue', 'category': 'hospital', 'subcategory': 'ambulance_delay', 'severity': 'high' },
+        { 'keyword': 'hospital', 'label': 'hospital_issue', 'category': 'hospital', 'subcategory': 'hospital_infra', 'severity': 'medium' },
+        { 'keyword': 'medical', 'label': 'hospital_issue', 'category': 'hospital', 'subcategory': 'hospital_infra', 'severity': 'medium' },
+        { 'keyword': 'pothole', 'label': 'pothole', 'category': 'civic_issue', 'subcategory': 'road_damage', 'severity': 'medium' },
+        { 'keyword': 'crack', 'label': 'road_damage', 'category': 'civic_issue', 'subcategory': 'road_damage', 'severity': 'medium' },
+        { 'keyword': 'garbage', 'label': 'garbage_waste', 'category': 'civic_issue', 'subcategory': 'garbage', 'severity': 'medium' },
+        { 'keyword': 'waste', 'label': 'garbage_waste', 'category': 'civic_issue', 'subcategory': 'garbage', 'severity': 'medium' },
+        { 'keyword': 'trash', 'label': 'garbage_waste', 'category': 'civic_issue', 'subcategory': 'garbage', 'severity': 'medium' },
+        { 'keyword': 'leak', 'label': 'water_supply', 'category': 'civic_issue', 'subcategory': 'water_supply', 'severity': 'medium' },
+        { 'keyword': 'water', 'label': 'water_supply', 'category': 'civic_issue', 'subcategory': 'water_supply', 'severity': 'medium' },
+        { 'keyword': 'light', 'label': 'streetlight', 'category': 'civic_issue', 'subcategory': 'street_light', 'severity': 'low' },
+        { 'keyword': 'tree', 'label': 'tree_environment', 'category': 'civic_issue', 'subcategory': 'other_civic', 'severity': 'medium' },
+        { 'keyword': 'manhole', 'label': 'drainage', 'category': 'civic_issue', 'subcategory': 'sewage', 'severity': 'high' },
+        { 'keyword': 'drain', 'label': 'drainage', 'category': 'civic_issue', 'subcategory': 'sewage', 'severity': 'high' },
+        { 'keyword': 'flood', 'label': 'drainage', 'category': 'civic_issue', 'subcategory': 'sewage', 'severity': 'high' },
+        { 'keyword': 'bribe', 'label': 'corruption_bribery', 'category': 'corruption', 'subcategory': 'bribery', 'severity': 'high' },
+        { 'keyword': 'corruption', 'label': 'corruption_bribery', 'category': 'corruption', 'subcategory': 'bribery', 'severity': 'high' }
     ]
 
-    clean_name = str(original_name or 'pothole_incident').lower()
+    clean_name = str(original_name or '').lower()
     matched = None
     for item in local_categories:
         if item['keyword'] in clean_name:
@@ -443,22 +475,25 @@ def detect_issue_from_image(file_bytes, mime_type='image/jpeg', original_name=''
             break
 
     if not matched:
-        matched = {
-            'label': 'Pothole',
-            'category': 'civic_issue',
-            'subcategory': 'road_damage',
-            'severity': 'Medium',
-            'severityReason': 'Civic issue classified under default rules.',
-            'reason': 'Deep asphalt surface depression identified as primary civic road hazard.'
+        return {
+            'success': True,
+            'is_complaint': False,
+            'category': 'uncertain',
+            'confidence': 0,
+            'severity': 'unknown',
+            'analysis': 'The image name did not contain recognizable keywords, and AI detection failed.',
+            'reason': 'Please upload a clearer image.',
+            'engine': 'local'
         }
 
     return {
         'success': True,
-        'detectedCategory': matched['label'],
-        'confidence': 0.88,
-        'reason': f"{matched['reason']} (Analyzed using smart visual offline patterns)",
+        'is_complaint': True,
+        'category': matched['label'],
+        'confidence': 85,
+        'reason': 'Issue detected via offline visual pattern matching.',
+        'analysis': 'Image file name matched known complaint signatures.',
         'severity': matched['severity'],
-        'severityReason': matched.get('severityReason', 'Classified by AI default.'),
         'mappedCategory': matched['category'],
         'mappedSubcategory': matched['subcategory'],
         'engine': 'local'

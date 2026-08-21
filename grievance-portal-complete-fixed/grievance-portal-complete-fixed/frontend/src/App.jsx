@@ -42,7 +42,11 @@ const ProtectedRoute = ({ children, roles }) => {
     return <Navigate to="/login" replace />;
   }
   
-  if (roles && !roles.includes(user?.role)) {
+  if (roles && (!user || !user.role || !roles.includes(user.role))) {
+    // If the token exists but the user object is corrupted or role doesn't match
+    if (!user || !user.role) {
+      return <Navigate to="/login" replace />;
+    }
     return <Navigate to="/unauthorized" replace />;
   }
   
@@ -117,15 +121,28 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
-const Unauthorized = () => (
-  <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-    <div className="text-center">
-      <div className="text-6xl font-bold text-red-200 dark:text-red-900 font-display mb-2">403</div>
-      <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Access Denied</h1>
-      <p className="text-slate-500 dark:text-slate-400">You don't have permission to access this page.</p>
+const Unauthorized = () => {
+  const navigate = () => {
+    localStorage.clear();
+    window.location.href = '/login';
+  };
+  
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+      <div className="text-center p-8 bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800">
+        <div className="text-6xl font-bold text-red-500 font-display mb-4">403</div>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Access Denied</h1>
+        <p className="text-slate-500 dark:text-slate-400 mb-8 max-w-sm">You don't have permission to access this page, or your session has invalid roles.</p>
+        <button 
+          onClick={navigate}
+          className="btn-primary w-full py-3"
+        >
+          Return to Login
+        </button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default function App() {
   const { initializeAuth } = useAuthStore();

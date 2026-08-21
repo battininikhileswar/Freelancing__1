@@ -63,10 +63,12 @@ cron.schedule('0 * * * *', async () => {
 });
 
 // ======= Start Server =======
-server.listen(PORT, () => {
-  logger.info(`🚀 Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
+const HOST = process.env.HOST || '0.0.0.0';
+
+server.listen(PORT, HOST, () => {
+  logger.info(`🚀 Server running on ${HOST}:${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
   logger.info(`📡 WebSocket server active`);
-  logger.info(`🔗 API: http://localhost:${PORT}/api`);
+  logger.info(`🔗 API: http://${HOST === '0.0.0.0' ? 'localhost' : HOST}:${PORT}/api`);
 });
 
 // Graceful shutdown
