@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 let db, storage, auth;
-let usesMockDb = true; // Forced to true because external Firebase service account credentials have been revoked
+let usesMockDb = false;
 
 const initFirebase = () => {
   if (!admin.apps.length) {

@@ -70,6 +70,7 @@ def submit_complaint_view(request):
                         'originalName': file.name,
                         'size': file.size
                     })
+                file.seek(0)
 
         escalation_due_date = timezone.now() + timedelta(hours=72)
         
@@ -476,7 +477,7 @@ def get_heatmap_data_view(request):
                     pass
         return JsonResponse({'success': True, 'data': points})
     except Exception as e:
-        print("❌ [heatmapView] Error:", str(e))
+        print(" [heatmapView] Error:", str(e))
         return JsonResponse({'success': False, 'message': 'Failed to retrieve heatmap data'}, status=500)
 
 
@@ -496,7 +497,7 @@ def detect_complaint_issue_view(request):
         if not uploaded_file.content_type.startswith('image/'):
             return JsonResponse({'success': False, 'message': 'Invalid file type. Only image files (JPEG, PNG, WEBP) are supported.'}, status=400)
             
-        print(f"📷 [AIController] Vision request received via Django. File: {uploaded_file.name} ({uploaded_file.size} bytes)")
+        print(f" [AIController] Vision request received via Django. File: {uploaded_file.name} ({uploaded_file.size} bytes)")
         
         # Read the file bytes
         file_bytes = uploaded_file.read()
@@ -504,6 +505,9 @@ def detect_complaint_issue_view(request):
         # Call the Vision service
         result = detect_issue_from_image(file_bytes, mime_type=uploaded_file.content_type, original_name=uploaded_file.name)
         
+        if not result.get('success'):
+            return JsonResponse({'success': False, 'message': result.get('message', 'AI Vision analysis failed.')}, status=500)
+            
         return JsonResponse({
             'success': True,
             'message': 'AI Photo Analysis completed successfully.',
@@ -520,7 +524,7 @@ def detect_complaint_issue_view(request):
     except Exception as e:
         import traceback
         traceback.print_exc()
-        print("❌ [AIController] Vision detection failed:", str(e))
+        print(" [AIController] Vision detection failed:", str(e))
         return JsonResponse({'success': False, 'message': f"AI Vision analysis failed: {str(e)}"}, status=500)
 
 
@@ -536,7 +540,7 @@ def ip_geolocation_view(request):
         else:
             client_ip = request.META.get('REMOTE_ADDR')
             
-        print(f"📡 [IP-GeoProxy] Incoming request. Client IP: {client_ip}")
+        print(f" [IP-GeoProxy] Incoming request. Client IP: {client_ip}")
         
         # If client_ip is local loopback (e.g. 127.0.0.1 or ::1), let ipwho.is auto-detect the gateway IP
         is_local = client_ip in ['127.0.0.1', '::1', 'localhost']
@@ -544,12 +548,12 @@ def ip_geolocation_view(request):
         # 1. TIER 1 Fallback: ipwho.is
         try:
             ipwhois_url = "https://ipwho.is/" if is_local else f"https://ipwho.is/{client_ip}"
-            print(f"📡 [IP-GeoProxy] [TIER 1] Calling ipwho.is for IP: {client_ip if not is_local else 'local-gateway'}")
+            print(f" [IP-GeoProxy] [TIER 1] Calling ipwho.is for IP: {client_ip if not is_local else 'local-gateway'}")
             res = requests.get(ipwhois_url, timeout=8)
             if res.status_code == 200:
                 data = res.json()
                 if data.get('success'):
-                    print(f"✅ [IP-GeoProxy] [TIER 1] ipwho.is succeeded. Location: {data.get('city')}, {data.get('region')}")
+                    print(f" [IP-GeoProxy] [TIER 1] ipwho.is succeeded. Location: {data.get('city')}, {data.get('region')}")
                     return JsonResponse({
                         'success': True,
                         'source': 'ipwhois',
@@ -562,23 +566,23 @@ def ip_geolocation_view(request):
                         }
                     })
                 else:
-                    print(f"⚠️ [IP-GeoProxy] [TIER 1] ipwho.is returned failure in response: {data.get('message')}")
+                    print(f" [IP-GeoProxy] [TIER 1] ipwho.is returned failure in response: {data.get('message')}")
             else:
-                print(f"⚠️ [IP-GeoProxy] [TIER 1] ipwho.is failed with status {res.status_code}")
+                print(f" [IP-GeoProxy] [TIER 1] ipwho.is failed with status {res.status_code}")
         except Exception as e:
-            print(f"❌ [IP-GeoProxy] [TIER 1] ipwho.is error: {str(e)}")
+            print(f" [IP-GeoProxy] [TIER 1] ipwho.is error: {str(e)}")
 
         # 2. TIER 2 Fallback: ipinfo.io
         try:
             ipinfo_url = "https://ipinfo.io/json" if is_local else f"https://ipinfo.io/{client_ip}/json"
-            print(f"📡 [IP-GeoProxy] [TIER 2] Calling ipinfo.io for IP: {client_ip if not is_local else 'local-gateway'}")
+            print(f" [IP-GeoProxy] [TIER 2] Calling ipinfo.io for IP: {client_ip if not is_local else 'local-gateway'}")
             res = requests.get(ipinfo_url, timeout=8)
             if res.status_code == 200:
                 data = res.json()
                 loc = data.get('loc', '')
                 if loc:
                     lat, lng = loc.split(',')
-                    print(f"✅ [IP-GeoProxy] [TIER 2] ipinfo.io succeeded. Location: {data.get('city')}, {data.get('region')}")
+                    print(f" [IP-GeoProxy] [TIER 2] ipinfo.io succeeded. Location: {data.get('city')}, {data.get('region')}")
                     return JsonResponse({
                         'success': True,
                         'source': 'ipinfo',
@@ -591,11 +595,11 @@ def ip_geolocation_view(request):
                         }
                     })
             else:
-                print(f"⚠️ [IP-GeoProxy] [TIER 2] ipinfo.io failed with status {res.status_code}")
+                print(f" [IP-GeoProxy] [TIER 2] ipinfo.io failed with status {res.status_code}")
         except Exception as e:
-            print(f"❌ [IP-GeoProxy] [TIER 2] ipinfo.io error: {str(e)}")
+            print(f" [IP-GeoProxy] [TIER 2] ipinfo.io error: {str(e)}")
 
         return JsonResponse({'success': False, 'message': 'All IP geolocation fallback proxy tiers failed.'}, status=500)
     except Exception as e:
-        print("❌ [IP-GeoProxy] Fatal error:", str(e))
+        print(" [IP-GeoProxy] Fatal error:", str(e))
         return JsonResponse({'success': False, 'message': f"Proxy geolocation error: {str(e)}"}, status=500)

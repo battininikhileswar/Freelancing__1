@@ -13,7 +13,7 @@
     "@tanstack/react-query": "^5.0.0",
     "axios": "^1.5.0",
     "date-fns": "^2.30.0",
-    "firebase": "^10.1.0",
+    "firebase": "^10.14.1",
     "framer-motion": "^10.16.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.290.0",

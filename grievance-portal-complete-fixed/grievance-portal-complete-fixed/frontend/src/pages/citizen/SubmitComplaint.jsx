@@ -74,7 +74,10 @@ export default function SubmitComplaint() {
     }
 
     setAiLoading(true);
-    setAiResult(null);
+    setAiResult(null); // Clear previous result immediately
+    
+    // Clear previously mapped category/subcategory to prevent stale metadata
+    setForm(f => ({ ...f, category: '', subcategory: '' }));
 
     const formData = new FormData();
     formData.append('image', file);
@@ -87,23 +90,6 @@ export default function SubmitComplaint() {
       const { data } = res.data;
       setAiResult(data);
 
-      if (data.is_complaint && data.category !== 'uncertain') {
-        // Pre-select category and subcategory automatically
-        setForm(f => ({
-          ...f,
-          category: data.mappedCategory,
-          subcategory: data.mappedSubcategory
-        }));
-        toast.success(`AI detected: ${data.category || data.detectedCategory} (${Math.round(data.confidence * 100)}% Confidence)`);
-      } else {
-        setForm(f => ({ ...f, category: '', subcategory: '' }));
-        if (data.category === 'uncertain') {
-          toast.error('Image is unclear. Please try another one.');
-        } else {
-          toast.error('Image is not suitable for a complaint.');
-        }
-      }
-
       // Proactively add file to files array so it is attached as evidence
       const withPreview = Object.assign(file, { preview: URL.createObjectURL(file) });
       setFiles(prev => {
@@ -111,6 +97,33 @@ export default function SubmitComplaint() {
         if (prev.length >= 5) return prev;
         return [...prev, withPreview];
       });
+
+      if (data.is_complaint && data.category !== 'uncertain' && data.category !== 'not_a_complaint') {
+        if (data.confidence >= 0.80) {
+          // Valid Grievance - Automatically update form state and advance
+          setForm(f => ({
+            ...f,
+            category: data.mappedCategory,
+            subcategory: data.mappedSubcategory
+          }));
+          
+          toast.success(`✓ GRIEVANCE DETECTED: ${data.category || data.detectedCategory}`);
+          
+          // Wait briefly for React state and UX purposes before navigating to next step (Description)
+          setTimeout(() => {
+            setStep(1); 
+          }, 1500);
+          
+        } else {
+          // Valid complaint detected, but confidence is too low
+          setForm(f => ({ ...f, category: '', subcategory: '' }));
+          toast.error('AI could not confidently identify the grievance. Please upload a clearer image.', { duration: 5000 });
+        }
+      } else {
+        // Not a complaint / uncertain / food image / passport photo
+        setForm(f => ({ ...f, category: '', subcategory: '' }));
+        toast.error('❌ NOT A VALID GRIEVANCE IMAGE. Please upload a clear photo of the public issue you want to report.', { duration: 6000 });
+      }
     } catch (err) {
       console.error('AI upload error:', err);
       toast.error(err.response?.data?.message || 'AI Photo detection failed. Please select manually.');
@@ -404,6 +417,23 @@ export default function SubmitComplaint() {
       formData.append('location', JSON.stringify(form.location));
       files.forEach(f => formData.append('attachments', f));
 
+      if (aiResult) {
+        // Send the complete structured AI result
+        const visionData = {
+          provider: aiResult.engine?.includes('gemini') ? 'gemini' : 'other',
+          model: aiResult.engine || 'unknown',
+          detectedIssue: aiResult.detectedCategory || aiResult.category,
+          category: aiResult.mappedCategory || aiResult.category,
+          subcategory: aiResult.mappedSubcategory || 'other_civic',
+          confidence: aiResult.confidence,
+          severity: aiResult.severity,
+          isRelevant: aiResult.is_complaint,
+          analysis: aiResult.analysis || '',
+          reason: aiResult.reason || ''
+        };
+        formData.append('aiVisionResult', JSON.stringify(visionData));
+      }
+
       const res = await api.post('/complaints', formData);
       const { complaintId, authorityType } = res.data.data;
 
@@ -588,34 +618,46 @@ export default function SubmitComplaint() {
                               </div>
 
                               <div className="flex justify-between items-center">
-                                <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Confidence Score:</span>
-                                <span className="font-black text-slate-800 dark:text-slate-100">
-                                  {Math.round(aiResult.confidence * 100)}% Match
+                                <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Category:</span>
+                                <span className="font-black text-slate-800 dark:text-slate-100 uppercase text-xs">
+                                  {aiResult.mappedCategory}
                                 </span>
                               </div>
 
                               <div className="flex justify-between items-center">
-                                <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">AI Severity:</span>
+                                <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Subcategory:</span>
+                                <span className="font-black text-slate-800 dark:text-slate-100 uppercase text-xs">
+                                  {aiResult.mappedSubcategory?.replace(/_/g, ' ')}
+                                </span>
+                              </div>
+
+                              <div className="flex justify-between items-center">
+                                <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Confidence:</span>
+                                <span className="font-black text-slate-800 dark:text-slate-100">
+                                  {Math.round(aiResult.confidence * 100)}%
+                                </span>
+                              </div>
+
+                              <div className="flex justify-between items-center">
+                                <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Severity:</span>
                                 <span className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border border-rose-200/50 animate-pulse">
                                   {aiResult.severity}
                                 </span>
                               </div>
 
-                              <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2 space-y-1">
-                                <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">AI Analysis:</span>
-                                <p className="text-slate-600 dark:text-slate-300 font-semibold leading-relaxed">
-                                  {aiResult.reason || aiResult.analysis}
-                                </p>
+                              <div className="flex justify-between items-center">
+                                <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Recommended Department:</span>
+                                <span className="font-black text-slate-800 dark:text-slate-100 text-xs">
+                                  {aiResult.department || 'Auto-Routing'}
+                                </span>
                               </div>
 
-                              {aiResult.severityReason && (
-                                <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2 space-y-1">
-                                  <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Severity Reason:</span>
-                                  <p className="text-slate-600 dark:text-slate-300 font-semibold leading-relaxed">
-                                    {aiResult.severityReason}
-                                  </p>
-                                </div>
-                              )}
+                              <div className="border-t border-slate-100 dark:border-slate-800/80 pt-2 space-y-1">
+                                <span className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">AI Summary:</span>
+                                <p className="text-slate-600 dark:text-slate-300 font-semibold leading-relaxed">
+                                  {aiResult.analysis}
+                                </p>
+                              </div>
 
                               <div className="pt-1.5 flex gap-2">
                                 <span className="text-[10px] font-bold text-green-600 dark:text-green-400 flex items-center gap-1">
@@ -650,6 +692,11 @@ export default function SubmitComplaint() {
                                 {key === 'fire' && 'Routed to Fire Department'}
                                 {key === 'hospital' && 'Routed to Healthcare & Hospital Authority'}
                               </div>
+                              {form.category === key && aiResult?.is_complaint && aiResult.mappedCategory === key && (
+                                <div className="text-[10px] font-bold text-green-600 dark:text-green-400 mt-1.5 flex items-center gap-1">
+                                  <CheckCircle size={10} /> Automatically selected by AI
+                                </div>
+                              )}
                             </div>
                             {form.category === key && <CheckCircle size={18} className="ml-auto text-brand-500 flex-shrink-0" />}
                           </div>
@@ -668,7 +715,14 @@ export default function SubmitComplaint() {
                           className={`px-3 py-2.5 rounded-lg border text-sm text-left transition-all ${form.subcategory === sub.value
                             ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/50 text-brand-700 dark:text-brand-400 font-medium'
                             : 'border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:border-brand-300 dark:hover:border-brand-700 bg-white dark:bg-slate-800'}`}>
-                          {sub.label}
+                          <div className="flex flex-col">
+                            <span>{sub.label}</span>
+                            {form.subcategory === sub.value && aiResult?.mappedSubcategory === sub.value && (
+                              <span className="text-[9px] font-bold text-green-600 dark:text-green-400 mt-0.5 flex items-center gap-1">
+                                <CheckCircle size={9} /> AI Selected
+                              </span>
+                            )}
+                          </div>
                         </button>
                       ))}
                     </div>
@@ -918,7 +972,7 @@ export default function SubmitComplaint() {
             </button>
             {step === STEPS.length - 2 ? (
               <button onClick={preSubmitCheck} disabled={submitting || duplicateLoading || !canNext()} className="btn-primary">
-                {submitting ? 'Submitting...' : duplicateLoading ? 'Checking...' : 'Confirm & Submit'}
+                {submitting ? 'Finalizing AI analysis...' : duplicateLoading ? 'Checking...' : 'Confirm & Submit'}
               </button>
             ) : (
               <button onClick={() => setStep(s => s + 1)} disabled={!canNext()} className="btn-primary">

@@ -250,79 +250,86 @@ def detect_issue_from_image(file_bytes, mime_type='image/jpeg', original_name=''
     import base64
     import requests
     
-    open_ai_key = os.getenv('OPENAI_API_KEY')
-    groq_key = os.getenv('GROQ_API_KEY')
+    gemini_key = os.getenv('GEMINI_API_KEY')
 
-    # Convert bytes to base64
     base64_image = base64.b64encode(file_bytes).decode('utf-8')
-    print(f"🖼️ [VisionService] Converting image of type {mime_type} to Base64 ({len(base64_image)} chars)")
+    print(f"[VisionService] Converting image of type {mime_type} to Base64 ({len(base64_image)} chars)")
 
     prompt_text = (
         "Analyze this image to determine if it is suitable for filing a public/civic complaint.\n\n"
         "IMPORTANT RULES:\n"
-        "1. A passport-size/person portrait, selfie, food, product photo, normal building, scenery, or random screenshot without civic issue evidence is NOT a complaint. For these, return is_complaint: false and category: \"not_a_complaint\".\n"
-        "2. If the image clearly shows corruption or bribery (e.g., money exchange in an official context), classify it as \"corruption_bribery\". Do NOT infer corruption just because a person is in the image.\n"
-        "3. If the image is extremely blurry, ambiguous, or unclear, return category: \"uncertain\".\n"
-        "4. If it IS a valid complaint, assign the most appropriate category (e.g., pothole, garbage_waste, streetlight, water_supply, drainage, road_damage, illegal_dumping, corruption_bribery, tree_environment, traffic_signal, public_property_damage, fire, hospital_issue, or other_civic_issue).\n\n"
+        "1. A passport-size/person portrait, selfie, food, product photo, normal building, scenery, or random screenshot without civic issue evidence is NOT a complaint. Set isComplaint to false.\n"
+        "2. If the image clearly shows corruption or bribery, classify it under category \"corruption\".\n"
+        "3. If the image is extremely blurry, ambiguous, or unclear, set isComplaint to false.\n"
+        "4. If it IS a valid complaint, set isComplaint to true, and assign the most appropriate category and subcategory.\n"
+        "5. Department mapping: road_damage->Municipal Corporation, garbage->Sanitation Department, water_supply->Water Supply Department, sewage->Sewerage / Municipal Department, streetlight->Electrical / Municipal Department, corruption->Anti-Corruption / Vigilance Department, fire->Fire & Emergency Services, hospital->Health Department.\n\n"
         "You MUST return ONLY a strictly valid JSON object with EXACTLY this structure:\n"
         "{\n"
-        "  \"is_complaint\": true/false,\n"
-        "  \"category\": \"one of the categories listed above, not_a_complaint, or uncertain\",\n"
-        "  \"confidence\": a number between 0.0 and 100.0,\n"
-        "  \"severity\": \"low\", \"medium\", \"high\", \"critical\", or \"none\",\n"
-        "  \"analysis\": \"A brief explanation of what the image shows.\",\n"
-        "  \"reason\": \"Why it was classified this way.\"\n"
-        "}"
+        "  \"isComplaint\": true/false,\n"
+        "  \"category\": \"civic_issue, crime, corruption, fire, hospital, or not_a_complaint\",\n"
+        "  \"subcategory\": \"road_damage, garbage, water_supply, sewage, street_light, other_civic, other, etc.\",\n"
+        "  \"detectedIssue\": \"Short name of the issue detected, e.g., Pothole, Garbage, None\",\n"
+        "  \"summary\": \"1-3 sentences describing the issue visible in the image.\",\n"
+        "  \"severity\": \"low, medium, high, or emergency\",\n"
+        "  \"confidence\": a numeric value between 0.0 and 1.0,\n"
+        "  \"department\": \"Recommended department name\",\n"
+        "  \"reason\": \"A brief explanation of what the image shows and why it was classified this way.\"\n"
+        "}\n\nPlease return strictly JSON. Do not include markdown formatting like ```json."
     )
 
     def parse_and_format_response(reply_text, engine):
         try:
-            parsed = json.loads(reply_text)
-            is_complaint = parsed.get('is_complaint', False)
+            # Clean markdown if Gemini still returns it
+            if reply_text.startswith('```json'):
+                reply_text = reply_text[7:]
+                if reply_text.endswith('```'):
+                    reply_text = reply_text[:-3]
+            elif reply_text.startswith('```'):
+                reply_text = reply_text[3:]
+                if reply_text.endswith('```'):
+                    reply_text = reply_text[:-3]
+                    
+            parsed = json.loads(reply_text.strip())
+            
+            is_complaint = parsed.get('isComplaint', False)
             if not isinstance(is_complaint, bool):
                 is_complaint = False
                 
-            category = str(parsed.get('category', 'uncertain')).lower().strip()
-            
-            # Normalize corruption variants
-            if 'corruption' in category or 'briber' in category:
-                category = 'corruption_bribery'
-
-            if category == 'uncertain':
+            confidence = parsed.get('confidence', 0)
+            if not isinstance(confidence, (int, float)):
+                confidence = 0
+                
+            if not is_complaint:
+                category_val = parsed.get('category', 'not_a_complaint')
+                if category_val != 'uncertain':
+                    category_val = 'not_a_complaint'
                 return {
                     'success': True,
                     'is_complaint': False,
-                    'category': 'uncertain',
-                    'confidence': parsed.get('confidence', 0),
-                    'severity': 'unknown',
-                    'analysis': parsed.get('analysis', 'The image does not provide enough visual evidence.'),
-                    'reason': parsed.get('reason', 'Please upload a clearer image showing the issue.'),
+                    'category': category_val,
+                    'detectedCategory': parsed.get('detectedIssue', 'None'),
+                    'confidence': confidence,
+                    'severity': parsed.get('severity', 'low'),
+                    'analysis': parsed.get('summary', ''),
+                    'reason': parsed.get('reason', 'The image does not show a reportable public grievance.'),
+                    'mappedCategory': category_val,
+                    'mappedSubcategory': parsed.get('subcategory', 'other'),
+                    'department': parsed.get('department', ''),
                     'engine': engine
                 }
 
-            if not is_complaint or category == 'not_a_complaint':
-                return {
-                    'success': True,
-                    'is_complaint': False,
-                    'category': 'not_a_complaint',
-                    'confidence': parsed.get('confidence', 100),
-                    'severity': 'none',
-                    'analysis': parsed.get('analysis', 'The image is not a valid civic complaint.'),
-                    'reason': parsed.get('reason', 'This image does not show a civic/public issue that can be reported.'),
-                    'engine': engine
-                }
-
-            mappings = map_category(category)
             return {
                 'success': True,
                 'is_complaint': True,
-                'category': category,
-                'confidence': parsed.get('confidence', 90),
+                'category': parsed.get('detectedIssue', 'civic_issue'),
+                'detectedCategory': parsed.get('detectedIssue', 'civic_issue'),
+                'confidence': confidence,
                 'severity': parsed.get('severity', 'medium'),
-                'analysis': parsed.get('analysis', 'Issue detected.'),
-                'reason': parsed.get('reason', 'Visual evidence found.'),
-                'mappedCategory': mappings['category'],
-                'mappedSubcategory': mappings['subcategory'],
+                'analysis': parsed.get('summary', 'Issue detected.'),
+                'reason': parsed.get('reason', 'Issue detected.'),
+                'mappedCategory': parsed.get('category', 'civic_issue'),
+                'mappedSubcategory': parsed.get('subcategory', 'other_civic'),
+                'department': parsed.get('department', 'Municipal Corporation'),
                 'engine': engine
             }
         except Exception as e:
@@ -338,163 +345,142 @@ def detect_issue_from_image(file_bytes, mime_type='image/jpeg', original_name=''
                 'engine': engine
             }
 
-    # ================= TIER 1: OPENAI VISION =================
-    if open_ai_key:
+    # ================= TIER 1: GEMINI VISION =================
+    if gemini_key:
         try:
-            print("🤖 [VisionService] [TIER 1] Requesting OpenAI GPT-4o-mini Vision...")
+            print("🤖 [VisionService] [TIER 1] Requesting Gemini 3.6 Flash via REST API...")
             payload = {
-                'model': 'gpt-4o-mini',
-                'messages': [
+                "contents": [
                     {
-                        'role': 'system',
-                        'content': 'You are an expert Smart City issue classifier. Always respond with strictly formatted JSON.'
-                    },
-                    {
-                        'role': 'user',
-                        'content': [
-                            { 'type': 'text', 'text': prompt_text },
+                        "parts": [
+                            {"text": prompt_text},
                             {
-                                'type': 'image_url',
-                                'image_url': {
-                                    'url': f"data:{mime_type};base64,{base64_image}"
+                                "inline_data": {
+                                    "mime_type": mime_type,
+                                    "data": base64_image
                                 }
                             }
                         ]
                     }
                 ],
-                'response_format': { 'type': 'json_object' },
-                'max_tokens': 300,
-                'temperature': 0.1
+                "generationConfig": {
+                    "temperature": 0.1,
+                    "responseMimeType": "application/json"
+                }
             }
             
             headers = {
-                'Authorization': f'Bearer {open_ai_key}',
                 'Content-Type': 'application/json'
             }
             
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={gemini_key}"
             response = requests.post(
-                'https://api.openai.com/v1/chat/completions',
+                url,
                 json=payload,
                 headers=headers,
-                timeout=25
+                timeout=60
             )
+            
             
             if response.status_code == 200:
                 res_json = response.json()
-                reply_text = res_json['choices'][0]['message']['content'].strip()
-                print(f"✅ [VisionService] [TIER 1] OpenAI response: {reply_text}")
-                return parse_and_format_response(reply_text, 'openai')
+                reply_text = res_json['candidates'][0]['content']['parts'][0]['text'].strip()
+                print(f"[VisionService] [TIER 1] Gemini response: {reply_text}")
+                
+                with open("gemini_debug.log", "a", encoding="utf-8") as f:
+                    f.write(f"SUCCESS: {reply_text}\n")
+                    
+                return parse_and_format_response(reply_text, 'gemini-3.6-flash')
             else:
-                print(f"⚠️ [VisionService] [TIER 1] OpenAI failed with status {response.status_code}: {response.text}")
+                error_msg = f"[VisionService] [TIER 1] Gemini failed with status {response.status_code}: {response.text}"
+                print(error_msg)
+                with open("gemini_debug.log", "a", encoding="utf-8") as f:
+                    f.write(f"ERROR: {error_msg}\n")
+                
         except Exception as e:
-            print(f"⚠️ [VisionService] [TIER 1] OpenAI request threw error: {str(e)}")
+            error_msg = f"[VisionService] [TIER 1] Gemini request threw error: {str(e)}"
+            print(error_msg)
+            with open("gemini_debug.log", "a", encoding="utf-8") as f:
+                f.write(f"EXCEPTION: {error_msg}\n")
  
-    # ================= TIER 2: GROQ VISION FALLBACK =================
-    if groq_key:
-        try:
-            print("🤖 [VisionService] [TIER 2] Falling back to Groq llama-3.2-11b-vision-preview...")
-            payload = {
-                'model': 'llama-3.2-11b-vision-preview',
-                'messages': [
-                    {
-                        'role': 'system',
-                        'content': 'You are an expert Smart City issue classifier. Always respond with strictly formatted JSON.'
-                    },
-                    {
-                        'role': 'user',
-                        'content': [
-                            { 'type': 'text', 'text': prompt_text },
-                            {
-                                'type': 'image_url',
-                                'image_url': {
-                                    'url': f"data:{mime_type};base64,{base64_image}"
-                                }
-                            }
-                        ]
-                    }
-                ],
-                'response_format': { 'type': 'json_object' },
-                'max_tokens': 300,
-                'temperature': 0.1
-            }
-            
-            headers = {
-                'Authorization': f'Bearer {groq_key}',
-                'Content-Type': 'application/json'
-            }
-            
-            response = requests.post(
-                'https://api.groq.com/openai/v1/chat/completions',
-                json=payload,
-                headers=headers,
-                timeout=25
-            )
-            
-            if response.status_code == 200:
-                res_json = response.json()
-                reply_text = res_json['choices'][0]['message']['content'].strip()
-                print(f"✅ [VisionService] [TIER 2] Groq response: {reply_text}")
-                return parse_and_format_response(reply_text, 'groq')
-            else:
-                print(f"⚠️ [VisionService] [TIER 2] Groq failed with status {response.status_code}: {response.text}")
-        except Exception as e:
-            print(f"⚠️ [VisionService] [TIER 2] Groq request threw error: {str(e)}")
- 
-    # ================= TIER 3: OFFLINE SMART CLASSIFIER =================
-    print("💡 [VisionService] [TIER 3] Activating fail-safe Offline Local Keyword Classifier...")
-    
-    local_categories = [
-        { 'keyword': 'fire', 'label': 'fire', 'category': 'fire', 'subcategory': 'fire_outbreak', 'severity': 'critical' },
-        { 'keyword': 'smoke', 'label': 'fire', 'category': 'fire', 'subcategory': 'fire_outbreak', 'severity': 'critical' },
-        { 'keyword': 'hazard', 'label': 'fire_hazard', 'category': 'fire', 'subcategory': 'safety_hazard', 'severity': 'high' },
-        { 'keyword': 'gas', 'label': 'gas_leak', 'category': 'fire', 'subcategory': 'gas_leak', 'severity': 'critical' },
-        { 'keyword': 'ambulance', 'label': 'hospital_issue', 'category': 'hospital', 'subcategory': 'ambulance_delay', 'severity': 'high' },
-        { 'keyword': 'hospital', 'label': 'hospital_issue', 'category': 'hospital', 'subcategory': 'hospital_infra', 'severity': 'medium' },
-        { 'keyword': 'medical', 'label': 'hospital_issue', 'category': 'hospital', 'subcategory': 'hospital_infra', 'severity': 'medium' },
-        { 'keyword': 'pothole', 'label': 'pothole', 'category': 'civic_issue', 'subcategory': 'road_damage', 'severity': 'medium' },
-        { 'keyword': 'crack', 'label': 'road_damage', 'category': 'civic_issue', 'subcategory': 'road_damage', 'severity': 'medium' },
-        { 'keyword': 'garbage', 'label': 'garbage_waste', 'category': 'civic_issue', 'subcategory': 'garbage', 'severity': 'medium' },
-        { 'keyword': 'waste', 'label': 'garbage_waste', 'category': 'civic_issue', 'subcategory': 'garbage', 'severity': 'medium' },
-        { 'keyword': 'trash', 'label': 'garbage_waste', 'category': 'civic_issue', 'subcategory': 'garbage', 'severity': 'medium' },
-        { 'keyword': 'leak', 'label': 'water_supply', 'category': 'civic_issue', 'subcategory': 'water_supply', 'severity': 'medium' },
-        { 'keyword': 'water', 'label': 'water_supply', 'category': 'civic_issue', 'subcategory': 'water_supply', 'severity': 'medium' },
-        { 'keyword': 'light', 'label': 'streetlight', 'category': 'civic_issue', 'subcategory': 'street_light', 'severity': 'low' },
-        { 'keyword': 'tree', 'label': 'tree_environment', 'category': 'civic_issue', 'subcategory': 'other_civic', 'severity': 'medium' },
-        { 'keyword': 'manhole', 'label': 'drainage', 'category': 'civic_issue', 'subcategory': 'sewage', 'severity': 'high' },
-        { 'keyword': 'drain', 'label': 'drainage', 'category': 'civic_issue', 'subcategory': 'sewage', 'severity': 'high' },
-        { 'keyword': 'flood', 'label': 'drainage', 'category': 'civic_issue', 'subcategory': 'sewage', 'severity': 'high' },
-        { 'keyword': 'bribe', 'label': 'corruption_bribery', 'category': 'corruption', 'subcategory': 'bribery', 'severity': 'high' },
-        { 'keyword': 'corruption', 'label': 'corruption_bribery', 'category': 'corruption', 'subcategory': 'bribery', 'severity': 'high' }
-    ]
-
-    clean_name = str(original_name or '').lower()
-    matched = None
-    for item in local_categories:
-        if item['keyword'] in clean_name:
-            matched = item
-            break
-
-    if not matched:
-        return {
-            'success': True,
-            'is_complaint': False,
-            'category': 'uncertain',
-            'confidence': 0,
-            'severity': 'unknown',
-            'analysis': 'The image name did not contain recognizable keywords, and AI detection failed.',
-            'reason': 'Please upload a clearer image.',
-            'engine': 'local'
-        }
-
+    print("[VisionService] GEMINI_API_KEY is not configured in .env or failed.")
     return {
-        'success': True,
-        'is_complaint': True,
-        'category': matched['label'],
-        'confidence': 85,
-        'reason': 'Issue detected via offline visual pattern matching.',
-        'analysis': 'Image file name matched known complaint signatures.',
-        'severity': matched['severity'],
-        'mappedCategory': matched['category'],
-        'mappedSubcategory': matched['subcategory'],
-        'engine': 'local'
+        'success': False,
+        'message': 'AI Vision provider failed or is not configured.'
     }
+
+def analyze_complaint_comprehensive(file_bytes, mime_type, description):
+    """
+    ANALYSIS 2: Final authoritative AI analysis that incorporates BOTH image and citizen description.
+    """
+    import base64
+    import requests
+    
+    gemini_key = os.getenv('GEMINI_API_KEY')
+    if not gemini_key:
+        raise Exception("GEMINI_API_KEY not found")
+
+    base64_image = base64.b64encode(file_bytes).decode('utf-8')
+    
+    prompt_text = (
+        "Analyze this public grievance complaint using BOTH the provided visual evidence (image) AND the contextual evidence (citizen description).\n"
+        f"Citizen Description: \"{description}\"\n\n"
+        "IMPORTANT RULES:\n"
+        "1. The image is visual evidence. The citizen description is contextual evidence. Use both.\n"
+        "2. The final summary and severity should consider the citizen's description. But do not blindly trust exaggerated claims not supported by the image.\n"
+        "3. Return strict JSON. Do not fabricate information.\n"
+        "4. Severity values must be: low, medium, high, or emergency.\n\n"
+        "You MUST return ONLY a strictly valid JSON object with EXACTLY this structure:\n"
+        "{\n"
+        "  \"isComplaint\": true/false,\n"
+        "  \"category\": \"civic_issue, crime, corruption, fire, or hospital\",\n"
+        "  \"subcategory\": \"road_damage, garbage, water_supply, sewage, street_light, other_civic, etc.\",\n"
+        "  \"detectedIssue\": \"Short name of the issue detected\",\n"
+        "  \"summary\": \"A concise 1-3 sentence summary incorporating both the visual evidence and the citizen's description.\",\n"
+        "  \"severity\": \"low, medium, high, or emergency\",\n"
+        "  \"confidence\": numeric value between 0.0 and 1.0,\n"
+        "  \"department\": \"Recommended department name\",\n"
+        "  \"reason\": \"Why you determined this severity and summary based on both sources.\"\n"
+        "}\n\nPlease return strictly JSON. No markdown."
+    )
+    
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {"text": prompt_text},
+                    {
+                        "inline_data": {
+                            "mime_type": mime_type,
+                            "data": base64_image
+                        }
+                    }
+                ]
+            }
+        ],
+        "generationConfig": {
+            "temperature": 0.1,
+            "responseMimeType": "application/json"
+        }
+    }
+    
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={gemini_key}"
+    response = requests.post(url, json=payload, headers={'Content-Type': 'application/json'}, timeout=60)
+    
+    if response.status_code == 200:
+        res_json = response.json()
+        reply_text = res_json['candidates'][0]['content']['parts'][0]['text'].strip()
+        
+        # Clean markdown if Gemini still returns it
+        if reply_text.startswith('```json'):
+            reply_text = reply_text[7:]
+            if reply_text.endswith('```'):
+                reply_text = reply_text[:-3]
+        elif reply_text.startswith('```'):
+            reply_text = reply_text[3:]
+            if reply_text.endswith('```'):
+                reply_text = reply_text[:-3]
+                
+        return json.loads(reply_text.strip())
+    else:
+        raise Exception(f"Gemini failed with status {response.status_code}")

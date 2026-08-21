@@ -87,6 +87,43 @@ const submitComplaint = asyncHandler(async (req, res) => {
     console.error('⚠️ [ComplaintController] Severity analysis failed, using fallback:', severityErr.message);
   }
 
+  // Parse and validate aiVisionResult
+  let aiVision = null;
+  if (req.body.aiVisionResult) {
+    try {
+      const parsedAi = JSON.parse(req.body.aiVisionResult);
+      
+      // Strict Validation Rules
+      const isValidConfidence = typeof parsedAi.confidence === 'number' && parsedAi.confidence >= 0 && parsedAi.confidence <= 1;
+      const isValidIsRelevant = typeof parsedAi.isRelevant === 'boolean';
+      const validSeverities = ['low', 'medium', 'high', 'critical', 'none'];
+      const isValidSeverity = validSeverities.includes(parsedAi.severity?.toLowerCase());
+      const validCategories = ['civic_issue', 'crime', 'corruption', 'fire', 'hospital', 'not_a_complaint', 'uncertain'];
+      const isValidCategory = validCategories.includes(parsedAi.category?.toLowerCase());
+
+      if (isValidConfidence && isValidIsRelevant && isValidSeverity && isValidCategory) {
+        aiVision = {
+          provider: parsedAi.provider || 'unknown',
+          model: parsedAi.model || 'unknown',
+          detectedIssue: typeof parsedAi.detectedIssue === 'string' ? parsedAi.detectedIssue : '',
+          category: parsedAi.category,
+          subcategory: typeof parsedAi.subcategory === 'string' ? parsedAi.subcategory : '',
+          confidence: parsedAi.confidence,
+          severity: parsedAi.severity.toLowerCase(),
+          isRelevant: parsedAi.isRelevant,
+          analysis: typeof parsedAi.analysis === 'string' ? parsedAi.analysis : '',
+          reason: typeof parsedAi.reason === 'string' ? parsedAi.reason : '',
+          analyzedAt: serverTimestamp()
+        };
+        console.log(`✅ [ComplaintController] Validated AI Vision Metadata stored for complaint ${complaintId}`);
+      } else {
+        console.warn('⚠️ [ComplaintController] AI Vision Metadata failed strict validation, dropping payload:', parsedAi);
+      }
+    } catch (e) {
+      console.warn('⚠️ [ComplaintController] Malformed aiVisionResult JSON, dropping payload:', e.message);
+    }
+  }
+
   const complaintData = {
     complaintId,
     category,
@@ -107,8 +144,9 @@ const submitComplaint = asyncHandler(async (req, res) => {
     userPhone: isAnonymous ? null : req.user.phone,
     attachments,
     status: 'pending',
-    severity: severityScore,
-    severityReason: severityReason,
+    severity: severityScore, // Note: Kept strictly unchanged
+    severityReason: severityReason, // Note: Kept strictly unchanged
+    ...(aiVision ? { aiVision } : {}), // Add aiVision safely
     routing: {
       authorityId: routing.authorityId,
       authorityType: routing.authorityType,
